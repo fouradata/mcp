@@ -2,6 +2,13 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.4] - 2026-07-01
+### Changed
+- Capability discovery is now public: `initialize`, `tools/list`, `prompts/list`, `prompts/get`
+  and `resources/list` no longer require an API key, so any client or registry can enumerate the
+  server's tools and prompts before a user provides one. `tools/call` (execution) and
+  `resources/read` (a tenant's offloaded payloads) still require the key.
+
 ## [0.4.3] - 2026-07-01
 ### Fixed
 - 401 `WWW-Authenticate` is now a plain Bearer challenge (dropped the RFC 9728 `resource_metadata`

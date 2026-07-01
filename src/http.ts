@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.4.3";
+const SERVER_VERSION = "0.4.4";
 
 // Spec MUSTs covered in this file:
 //   Origin + Host validation (CVE-2025-66414 DNS rebinding)
@@ -160,13 +160,22 @@ function extractBearer(req: Request): string | null {
 // OAuth flow the server does not implement yet, which loops. Re-add when the OAuth AS ships (Phase 4).
 const WWW_AUTHENTICATE = 'Bearer realm="foura-mcp"';
 
+// Capability discovery (initialize, */list, prompts/get, ping) is PUBLIC: any client or
+// registry can enumerate the tools/prompts before a user provides a key. Only methods that
+// touch the tenant's account require the key - tool execution and reading offloaded payloads.
+const KEY_REQUIRED_METHODS = new Set(["tools/call", "resources/read"]);
+
 app.post(
   "/mcp",
   validateOriginAndHost,
   validateProtocolVersion,
   async (req: Request, res: Response) => {
     const apiKey = extractBearer(req);
-    if (!apiKey) {
+    const calls = Array.isArray(req.body) ? req.body : [req.body];
+    const needsKey = calls.some(
+      (c) => c && typeof c.method === "string" && KEY_REQUIRED_METHODS.has(c.method),
+    );
+    if (needsKey && !apiKey) {
       jsonRpcError(
         res,
         401,
@@ -190,7 +199,7 @@ app.post(
       });
 
       await mcp.connect(transport);
-      await withApiKey(apiKey, () => transport.handleRequest(req, res, req.body));
+      await withApiKey(apiKey ?? "", () => transport.handleRequest(req, res, req.body));
     } catch (err) {
       console.error("[foura-mcp] /mcp handler error:", err);
       if (!res.headersSent) {
