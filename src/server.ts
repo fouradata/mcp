@@ -9,7 +9,7 @@ import { registerPrompts } from "./prompts.js";
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "foura-mcp",
-    version: "0.4.1",
+    version: "0.4.2",
   });
 
   registerSingleTool(server);

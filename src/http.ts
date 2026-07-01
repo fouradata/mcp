@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.4.1";
+const SERVER_VERSION = "0.4.2";
 
 // Spec MUSTs covered in this file:
 //   Origin + Host validation (CVE-2025-66414 DNS rebinding)
@@ -148,7 +148,11 @@ app.get("/llms.txt", (_req, res) => {
 
 function extractBearer(req: Request): string | null {
   const auth = req.header("authorization");
-  if (auth?.toLowerCase().startsWith("bearer ")) return auth.slice(7).trim();
+  if (auth) {
+    // "Authorization: Bearer <key>", or a bare "Authorization: <key>" for MCP
+    // gateways that forward the raw key without the Bearer prefix.
+    return auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : auth.trim();
+  }
   const xKey = req.header("x-api-key");
   if (xKey) return xKey.trim();
   return null;

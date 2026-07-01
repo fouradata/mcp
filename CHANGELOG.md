@@ -2,6 +2,11 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.2] - 2026-07-01
+### Changed
+- HTTP transport: also accept the API key as a bare `Authorization: <key>` header (in addition to
+  `Authorization: Bearer <key>`), for MCP gateways that forward the raw key.
+
 ## [0.4.1] - 2026-07-01
 ### Added
 - `mcpName` in `package.json` so `@fouradata/mcp` is discoverable in the official MCP Registry.
