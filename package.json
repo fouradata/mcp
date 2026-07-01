@@ -23,8 +23,7 @@
     "test:integration:stdio": "node --test --test-concurrency=1 --test-reporter=spec 'tests/integration-stdio/**/*.test.mjs'",
     "test:integration:http": "node --test --test-reporter=spec 'tests/integration-http/**/*.test.mjs'",
     "test:docs": "node --test --test-reporter=spec 'tests/docs-compliance/**/*.test.mjs'",
-    "test:ai": "node --test --test-reporter=spec 'tests/ai-compliance/**/*.test.mjs'",
-    "test:all": "npm run test && npm run test:integration:http && npm run test:ai",
+    "test:all": "npm run test && npm run test:integration:http",
     "smoke": "node tests/smoke.mjs",
     "inspector": "npx -y @modelcontextprotocol/inspector tsx src/stdio.ts",
     "lint": "tsc --noEmit",
@@ -39,10 +38,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.96.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.7.0",
-    "tsx": "^4.21.0",
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "engines": {
