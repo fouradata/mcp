@@ -4,6 +4,8 @@
 
 Four tools, six prompts, one API key.
 
+[GitHub](https://github.com/fouradata/mcp) - [npm](https://www.npmjs.com/package/@fouradata/mcp) - [Docs](https://foura.ai/docs/mcp/server)
+
 ## Quick Start - local stdio (recommended for Claude Desktop)
 
 Grab a key at [foura.ai/dashboard#api-keys](https://foura.ai/dashboard#api-keys) (one click, shown once on creation, format `pk_live_...`). Then drop this into your MCP client's config:
@@ -269,6 +271,8 @@ MIT. See [`LICENSE`](./LICENSE).
 
 ## Links
 
+- Source (GitHub): <https://github.com/fouradata/mcp>
+- npm package: <https://www.npmjs.com/package/@fouradata/mcp>
 - API documentation: <https://foura.ai/docs>
 - MCP server reference: <https://foura.ai/docs/mcp/server>
 - MCP error codes: <https://foura.ai/docs/mcp/errors>

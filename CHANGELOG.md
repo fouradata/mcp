@@ -2,6 +2,10 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.3.3] - 2026-07-01
+### Changed
+- README: added GitHub source and npm package links.
+
 ## [0.3.2] - 2026-07-01
 ### Changed
 - The package now builds and publishes from the public GitHub repository with npm provenance.
