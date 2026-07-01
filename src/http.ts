@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.3.3";
+const SERVER_VERSION = "0.4.0";
 
 // Spec MUSTs covered in this file:
 //   Origin + Host validation (CVE-2025-66414 DNS rebinding)
