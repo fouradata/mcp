@@ -1,6 +1,6 @@
 {
   "name": "@fouradata/mcp",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "MCP server for the FourA web scraping API \u2014 three tools for HTTP requests, rotating proxies, and full browser sessions, usable from any MCP client.",
   "type": "module",
   "main": "dist/server.js",
