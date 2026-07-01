@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.4.2";
+const SERVER_VERSION = "0.4.3";
 
 // Spec MUSTs covered in this file:
 //   Origin + Host validation (CVE-2025-66414 DNS rebinding)
@@ -25,10 +25,6 @@ const SERVER_VERSION = "0.4.2";
 //
 // SUPPORTED_PROTOCOL_VERSIONS for @modelcontextprotocol/sdk@1.29.0:
 //   ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05', '2024-10-07']
-
-const RESOURCE_METADATA_URL =
-  process.env.FOURA_MCP_RESOURCE_METADATA_URL ??
-  "https://foura.ai/docs/api/mcp#auth";
 
 function parseList(env: string | undefined, defaults: string[]): string[] {
   const raw = (env ?? "").trim();
@@ -158,8 +154,11 @@ function extractBearer(req: Request): string | null {
   return null;
 }
 
-// emit WWW-Authenticate on 401 so clients can negotiate auth.
-const WWW_AUTHENTICATE = `Bearer realm="foura-mcp", resource_metadata="${RESOURCE_METADATA_URL}"`;
+// emit WWW-Authenticate on 401 so clients send a bearer token. Intentionally a PLAIN
+// Bearer challenge with NO `resource_metadata` (RFC 9728): we are API-key auth only for
+// now, and advertising OAuth resource metadata makes gateways (e.g. Smithery) attempt an
+// OAuth flow the server does not implement yet, which loops. Re-add when the OAuth AS ships (Phase 4).
+const WWW_AUTHENTICATE = 'Bearer realm="foura-mcp"';
 
 app.post(
   "/mcp",

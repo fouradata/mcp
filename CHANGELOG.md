@@ -2,6 +2,12 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.3] - 2026-07-01
+### Fixed
+- 401 `WWW-Authenticate` is now a plain Bearer challenge (dropped the RFC 9728 `resource_metadata`
+  hint). It advertised an OAuth flow the server does not implement, which made MCP gateways loop
+  trying to authorize instead of sending the API key.
+
 ## [0.4.2] - 2026-07-01
 ### Changed
 - HTTP transport: also accept the API key as a bare `Authorization: <key>` header (in addition to
