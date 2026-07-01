@@ -2,6 +2,11 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.7] - 2026-07-01
+### Changed
+- Raised the tool-schema token budget 10000 -> 11000 to fit the now fully-described input
+  parameters (internal build check only; no runtime change).
+
 ## [0.4.6] - 2026-07-01
 ### Changed
 - Described the remaining `validate` config groups (status / headers / data) on `foura_single`,

@@ -1,7 +1,7 @@
 {
   "name": "@fouradata/mcp",
   "mcpName": "ai.foura/mcp",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "MCP server for the FourA web scraping API - four tools (smart auto-fetch, HTTP request, rotating proxies, full browser) plus six prompts, usable from any MCP client.",
   "type": "module",
   "main": "dist/server.js",

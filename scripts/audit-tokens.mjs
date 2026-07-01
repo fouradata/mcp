@@ -27,7 +27,11 @@ import { dirname, resolve } from "node:path";
 // smart-default orchestrator, ~2.7k tok). The three primitives were KEPT in
 // full -- auto is an additional entry point, not a replacement, so its cost is
 // additive by design. The "context tax" ceiling for FOUR tools sits ~10500.
-const BUDGET = Number(process.env.BUDGET_TOKENS ?? 10000);
+// Raised 10000 -> 11000 in v0.4.7: every tool input parameter now carries a
+// description (MCP-registry quality signals + better agent guidance). The fuller
+// input schemas cost ~560 more tokens; still a modest per-session cost for four
+// fully-documented tools. Trim descriptions before raising this further.
+const BUDGET = Number(process.env.BUDGET_TOKENS ?? 11000);
 const CHARS_PER_TOKEN = 3.5;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
