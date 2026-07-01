@@ -2,6 +2,18 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.0] - 2026-07-01
+### Added
+- README install badges (npm version, downloads, provenance, license) plus one-click install
+  buttons ("Add to Cursor", "Install in VS Code") and per-client setup.
+- `server.json` (with an `mcp-name` marker) for the official MCP registry; `smithery.yaml` and
+  `.mcp.json` for registries and client config.
+- Community and trust files: SECURITY, CONTRIBUTING, CODE_OF_CONDUCT, AGENTS, CLAUDE, DEVELOPMENT,
+  issue and pull-request templates, and Dependabot config.
+### Changed
+- Fixed the npm `description` (ASCII hyphens, four tools) and updated `homepage`.
+- Refreshed documentation links across the README and the other `.md` files.
+
 ## [0.3.3] - 2026-07-01
 ### Changed
 - README: added GitHub source and npm package links.

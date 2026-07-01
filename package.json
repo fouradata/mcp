@@ -1,7 +1,7 @@
 {
   "name": "@fouradata/mcp",
   "version": "0.3.3",
-  "description": "MCP server for the FourA web scraping API \u2014 three tools for HTTP requests, rotating proxies, and full browser sessions, usable from any MCP client.",
+  "description": "MCP server for the FourA web scraping API - four tools (smart auto-fetch, HTTP request, rotating proxies, full browser) plus six prompts, usable from any MCP client.",
   "type": "module",
   "main": "dist/server.js",
   "bin": {
@@ -50,7 +50,12 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
+    "claude",
+    "cursor",
+    "ai-agents",
+    "llm-tools",
     "foura",
     "web-scraping",
     "scraping-api",
@@ -63,7 +68,7 @@
     "type": "git",
     "url": "git+https://github.com/fouradata/mcp.git"
   },
-  "homepage": "https://foura.ai/docs/mcp/server",
+  "homepage": "https://foura.ai/mcp",
   "bugs": {
     "url": "https://github.com/fouradata/mcp/issues"
   }

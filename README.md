@@ -1,14 +1,27 @@
+<!-- mcp-name: ai.foura/mcp -->
 # @fouradata/mcp
+
+[![npm version](https://img.shields.io/npm/v/@fouradata/mcp?logo=npm&color=cb3837)](https://www.npmjs.com/package/@fouradata/mcp)
+[![npm downloads](https://img.shields.io/npm/dm/@fouradata/mcp?color=cb3837)](https://www.npmjs.com/package/@fouradata/mcp)
+[![provenance signed](https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm)](https://www.npmjs.com/package/@fouradata/mcp)
+[![license MIT](https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f)](./LICENSE)
 
 [FourA Web Scraping API](https://foura.ai/) as four [Model Context Protocol](https://modelcontextprotocol.io) tools plus six built-in workflow prompts. Plug it into Claude Desktop, Claude Code, Cursor, Windsurf, or any other MCP client and fetch arbitrary public web pages, bypass anti-bot challenges, and render JavaScript-heavy sites - without writing a line of integration code.
 
-Four tools, six prompts, one API key.
+Four tools, six prompts, one API key. One smart `foura_auto` tool picks the fetch method for you (direct, proxy, or full browser); drop to the primitives when you want explicit control. Published to npm with build [provenance](https://docs.npmjs.com/generating-provenance-statements) - the tarball is cryptographically traceable to this repo and CI run.
 
-[GitHub](https://github.com/fouradata/mcp) - [npm](https://www.npmjs.com/package/@fouradata/mcp) - [Docs](https://foura.ai/docs/mcp/server)
+**One-click install:**
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](cursor://anysphere.cursor-deeplink/mcp/install?name=foura&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBmb3VyYWRhdGEvbWNwIl0sImVudiI6eyJGT1VSQV9BUElfS0VZIjoiWU9VUl9GT1VSQV9BUElfS0VZIn19)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522foura%2522%252C%2522command%2522%253A%2522npx%2522%252C%2522args%2522%253A%255B%2522-y%2522%252C%2522%2540fouradata%252Fmcp%2522%255D%252C%2522env%2522%253A%257B%2522FOURA_API_KEY%2522%253A%2522YOUR_FOURA_API_KEY%2522%257D%257D)
+
+Both buttons pre-fill the config with a `YOUR_FOURA_API_KEY` placeholder - replace it with your key. Or by hand: `claude mcp add foura -- npx -y @fouradata/mcp` (set `FOURA_API_KEY` in env first). Full per-client setup below.
+
+[FourA](https://foura.ai) - [MCP page](https://foura.ai/mcp) - [GitHub](https://github.com/fouradata/mcp) - [npm](https://www.npmjs.com/package/@fouradata/mcp) - [Docs](https://foura.ai/docs/mcp/server) - [Hosted endpoint](https://mcp.foura.ai/mcp)
 
 ## Quick Start - local stdio (recommended for Claude Desktop)
 
-Grab a key at [foura.ai/dashboard#api-keys](https://foura.ai/dashboard#api-keys) (one click, shown once on creation, format `pk_live_...`). Then drop this into your MCP client's config:
+Grab a key at [foura.ai/dashboard/#api-keys](https://foura.ai/dashboard/#api-keys) (one click, shown once on creation, format `pk_live_...`). Then drop this into your MCP client's config:
 
 ```json
 {
@@ -164,7 +177,7 @@ Full recipe text + manual fallback prompts: [foura.ai/docs/mcp/recipes](https://
 
 Your `Bearer` token (or the `FOURA_API_KEY` env var in stdio mode) forwards to the FourA API as `X-API-Key`. One key, all four tools.
 
-Keys are managed in the [dashboard](https://foura.ai/dashboard#api-keys) - shown once on creation, rotate or deactivate any time. See [foura.ai/docs/getting-started/authentication](https://foura.ai/docs/getting-started/authentication) for the full key-management walkthrough.
+Keys are managed in the [dashboard](https://foura.ai/dashboard/#api-keys) - shown once on creation, rotate or deactivate any time. See [foura.ai/docs/getting-started/authentication](https://foura.ai/docs/getting-started/authentication) for the full key-management walkthrough.
 
 ## Error envelope - typed contract for agent retries
 
@@ -263,7 +276,7 @@ Configurable environment:
 | `FOURA_API_BASE` | `https://api.foura.ai/api` | Upstream FourA REST base URL |
 | `FOURA_MCP_PAYLOADS_DIR` | `/data/payloads` | Where ≥50 KB responses are cached on disk |
 
-A public GitHub mirror lands with `v1.0`; until then the source lives in a private repo. Ping `support@foura.ai` if you need early access to the container image.
+The full source is public here under MIT - build the container from the included [`Dockerfile`](./Dockerfile) (`docker build -t foura-mcp .`), or run it straight from npm with `npx -y @fouradata/mcp`. See [DEVELOPMENT.md](./DEVELOPMENT.md) for the local build and test workflow.
 
 ## License
 
@@ -271,6 +284,8 @@ MIT. See [`LICENSE`](./LICENSE).
 
 ## Links
 
+- FourA (web scraping API): <https://foura.ai>
+- MCP server page: <https://foura.ai/mcp>
 - Source (GitHub): <https://github.com/fouradata/mcp>
 - npm package: <https://www.npmjs.com/package/@fouradata/mcp>
 - API documentation: <https://foura.ai/docs>
@@ -279,4 +294,4 @@ MIT. See [`LICENSE`](./LICENSE).
 - MCP recipes: <https://foura.ai/docs/mcp/recipes>
 - REST API errors: <https://foura.ai/docs/api/errors>
 - MCP specification: <https://modelcontextprotocol.io>
-- Get a key: <https://foura.ai/dashboard#api-keys>
+- Get a key: <https://foura.ai/dashboard/#api-keys>

@@ -3,6 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { createServer } from "./server.js";
 import { withApiKey } from "./auth.js";
+import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
 const SERVER_VERSION = "0.3.3";
@@ -131,6 +132,18 @@ function validateProtocolVersion(req: Request, res: Response, next: NextFunction
 
 app.get("/healthz", (_req, res) => {
   res.json({ ok: true, name: "foura-mcp", version: SERVER_VERSION });
+});
+
+// Public discovery surfaces (no auth, no Origin/Host gate - like /healthz).
+// The human landing lives at foura.ai/mcp, so a browser hitting the bare root
+// is redirected there (301 = permanent, consolidates SEO onto the one page).
+// llms.txt stays here: mcp.foura.ai is a separate host, so crawlers hitting
+// mcp.foura.ai/llms.txt should find a map without following the redirect.
+app.get("/", (_req, res) => {
+  res.redirect(301, LANDING_REDIRECT);
+});
+app.get("/llms.txt", (_req, res) => {
+  res.type("text/plain").send(LLMS_TXT);
 });
 
 function extractBearer(req: Request): string | null {

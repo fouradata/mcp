@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "foura": {
+      "command": "npx",
+      "args": ["-y", "@fouradata/mcp"],
+      "env": {
+        "FOURA_API_KEY": "pk_live_REPLACE_ME"
+      }
+    }
+  }
+}

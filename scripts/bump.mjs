@@ -43,6 +43,8 @@ const ANCHORS = [
   { file: "src/tools/proxy.ts",   pattern: `foura-mcp/${current} (proxy)`,   replacement: (v) => `foura-mcp/${v} (proxy)` },
   { file: "src/tools/browser.ts", pattern: `foura-mcp/${current} (browser)`, replacement: (v) => `foura-mcp/${v} (browser)` },
   { file: "src/tools/auto.ts",    pattern: `foura-mcp/${current} (auto)`,    replacement: (v) => `foura-mcp/${v} (auto)` },
+  // server.json carries the version twice (top-level + packages[0]) — replace all.
+  { file: "server.json",          pattern: `"version": "${current}"`,        replacement: (v) => `"version": "${v}"`, all: true },
 ];
 
 // 3. Validate — every anchor must contain the current version literal.
@@ -70,7 +72,10 @@ console.log(`bumping ${kind}: ${current} → ${next}\n`);
 for (const a of ANCHORS) {
   const path = resolve(ROOT, a.file);
   const text = readFileSync(path, "utf8");
-  writeFileSync(path, text.replace(a.pattern, a.replacement(next)));
+  const next_text = a.all
+    ? text.replaceAll(a.pattern, a.replacement(next))
+    : text.replace(a.pattern, a.replacement(next));
+  writeFileSync(path, next_text);
   console.log(`  ✓ ${a.file}`);
 }
 

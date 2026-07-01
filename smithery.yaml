@@ -1,0 +1,20 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - FOURA_API_KEY
+    properties:
+      FOURA_API_KEY:
+        type: string
+        title: FourA API key
+        description: Your FourA API key (pk_live_...), created at foura.ai/dashboard#api-keys
+        format: password
+  commandFunction: |
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@fouradata/mcp"],
+      env: { FOURA_API_KEY: config.FOURA_API_KEY }
+    })
+  exampleConfig:
+    FOURA_API_KEY: pk_live_REPLACE_ME
