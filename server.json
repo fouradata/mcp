@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "ai.foura/mcp",
-  "description": "Web scraping for AI agents. One smart tool fetches any public page (direct, rotating proxy, or full browser), bypassing anti-bot challenges. Four tools, six prompts, one API key.",
-  "version": "0.4.0",
+  "description": "Web scraping for AI agents: fetch any page via proxy or full browser, past anti-bot defenses.",
+  "version": "0.4.1",
   "repository": {
     "url": "https://github.com/fouradata/mcp",
     "source": "github"
@@ -13,7 +13,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@fouradata/mcp",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "transport": {
         "type": "stdio"
       },

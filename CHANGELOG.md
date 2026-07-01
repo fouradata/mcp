@@ -2,6 +2,12 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.1] - 2026-07-01
+### Added
+- `mcpName` in `package.json` so `@fouradata/mcp` is discoverable in the official MCP Registry.
+### Changed
+- Shorter one-line description for registry listings.
+
 ## [0.4.0] - 2026-07-01
 ### Added
 - README install badges (npm version, downloads, provenance, license) plus one-click install
