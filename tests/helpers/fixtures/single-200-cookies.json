@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "headers": [
+    {
+      "result": { "version": "HTTP/2", "code": 200, "reason": "" },
+      "content-type": "text/html; charset=utf-8",
+      "set-cookie": ["a=1; Path=/", "b=2; Path=/"],
+      "server": "gunicorn/19.9.0"
+    }
+  ],
+  "data": "{\"cookies\":{\"a\":\"1\",\"b\":\"2\"}}",
+  "total_time": 0.12
+}

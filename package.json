@@ -1,0 +1,70 @@
+{
+  "name": "@fouradata/mcp",
+  "version": "0.3.1",
+  "description": "MCP server for the FourA web scraping API \u2014 three tools for HTTP requests, rotating proxies, and full browser sessions, usable from any MCP client.",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "mcp": "bin/foura-mcp.js",
+    "foura-mcp": "bin/foura-mcp.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/stdio.ts",
+    "dev:http": "tsx src/http.ts",
+    "start:http": "node dist/http.js",
+    "test": "npm run build && npm run test:unit && npm run test:integration:stdio && npm run test:docs",
+    "test:unit": "node --test --test-reporter=spec 'tests/unit/**/*.test.mjs'",
+    "test:integration:stdio": "node --test --test-concurrency=1 --test-reporter=spec 'tests/integration-stdio/**/*.test.mjs'",
+    "test:integration:http": "node --test --test-reporter=spec 'tests/integration-http/**/*.test.mjs'",
+    "test:docs": "node --test --test-reporter=spec 'tests/docs-compliance/**/*.test.mjs'",
+    "test:ai": "node --test --test-reporter=spec 'tests/ai-compliance/**/*.test.mjs'",
+    "test:all": "npm run test && npm run test:integration:http && npm run test:ai",
+    "smoke": "node tests/smoke.mjs",
+    "inspector": "npx -y @modelcontextprotocol/inspector tsx src/stdio.ts",
+    "lint": "tsc --noEmit",
+    "audit:tokens": "node scripts/audit-tokens.mjs",
+    "bump": "node scripts/bump.mjs",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "undici": "^8.2.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.7.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "foura",
+    "web-scraping",
+    "scraping-api",
+    "rotating-proxies",
+    "anti-bot",
+    "browser-automation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fouradata/mcp.git"
+  },
+  "homepage": "https://foura.ai/docs/mcp/server",
+  "bugs": {
+    "url": "https://github.com/fouradata/mcp/issues"
+  }
+}

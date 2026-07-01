@@ -1,0 +1,8 @@
+{
+  "error": "Rate limit exceeded",
+  "status": 429,
+  "service": "single",
+  "retryAfter": 5,
+  "current": { "concurrency": 3, "rpm": 120 },
+  "limits": { "maxConcurrency": 5, "maxRpm": 60 }
+}

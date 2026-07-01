@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "userAgent": "Mozilla/5.0 ...",
+  "headers": { "content-type": "application/json" },
+  "cookies": [],
+  "body": { "result": "ok", "count": 42 }
+}

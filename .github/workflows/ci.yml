@@ -1,0 +1,20 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      FOURA_API_KEY: ${{ secrets.FOURA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: 'npm' }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run test:unit
+      - name: Integration (stdio) against api.foura.ai
+        if: ${{ env.FOURA_API_KEY != '' }}
+        run: npm run test:integration:stdio

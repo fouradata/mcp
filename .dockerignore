@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitea
+.env
+.env.local
+*.log
+.DS_Store
+tests
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+
+# scripts/ is INTENTIONALLY shipped — audit-tokens.mjs runs during CI
+# inside the built image. Don't add scripts/ here.

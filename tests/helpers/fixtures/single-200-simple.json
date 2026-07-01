@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "headers": [
+    {
+      "result": { "version": "HTTP/2", "code": 200, "reason": "" },
+      "content-type": "text/html; charset=UTF-8",
+      "content-length": "1256",
+      "date": "Wed, 14 May 2026 10:00:00 GMT",
+      "server": "ECS (dcb/7F60)"
+    }
+  ],
+  "data": "<!doctype html>\n<html>\n<head><title>Example Domain</title></head>\n<body>...</body>\n</html>",
+  "total_time": 0.034
+}

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": [
+    {
+      "result": { "version": "HTTP/2", "code": 200, "reason": "" },
+      "content-type": "application/json"
+    }
+  ],
+  "data": { "users": [{ "id": 1, "name": "Alice" }], "next": null },
+  "total_time": 0.08
+}

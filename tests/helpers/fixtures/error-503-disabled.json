@@ -1,0 +1,8 @@
+{
+  "error": "Service disabled",
+  "status": 503,
+  "service": "single",
+  "retryAfter": 60,
+  "current": { "concurrency": 0, "rpm": 0 },
+  "limits": { "maxConcurrency": 5, "maxRpm": 60 }
+}

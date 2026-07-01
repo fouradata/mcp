@@ -1,0 +1,7 @@
+{
+  "status": 0,
+  "headers": [],
+  "data": "",
+  "total_time": 0,
+  "error": "Operation timed out after 15000 milliseconds with 0 bytes received"
+}

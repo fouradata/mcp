@@ -1,0 +1,8 @@
+{
+  "error": "Service at capacity",
+  "status": 503,
+  "service": "single",
+  "retryAfter": 2,
+  "current": { "concurrency": 6, "rpm": 30 },
+  "limits": { "maxConcurrency": 5, "maxRpm": 60 }
+}

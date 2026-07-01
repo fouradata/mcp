@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "userAgent": "Mozilla/5.0 ...",
+  "headers": {
+    "content-type": "text/html",
+    "set-cookie": ["a=1; Path=/", "b=2; Path=/"]
+  },
+  "cookies": [
+    {
+      "name": "a",
+      "value": "1",
+      "domain": "httpbin.org",
+      "path": "/",
+      "expires": -1,
+      "size": 2,
+      "httpOnly": false,
+      "secure": false,
+      "session": true,
+      "sameSite": "Lax",
+      "priority": "Medium",
+      "sameParty": false,
+      "sourceScheme": "Secure",
+      "sourcePort": 443
+    },
+    {
+      "name": "b",
+      "value": "2",
+      "domain": "httpbin.org",
+      "path": "/",
+      "session": true,
+      "sameSite": "Strict"
+    }
+  ],
+  "body": "{\"cookies\":{\"a\":\"1\",\"b\":\"2\"}}"
+}

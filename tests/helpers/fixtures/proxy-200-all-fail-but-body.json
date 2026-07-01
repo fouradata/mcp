@@ -1,0 +1,9 @@
+{
+  "error": "Download maxTry limit reached",
+  "request": {
+    "timeout_ms": 45000,
+    "maxTries": 5,
+    "request": { "method": "GET", "url": "https://example.com" }
+  },
+  "total": 8.234
+}

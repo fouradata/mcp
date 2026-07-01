@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "headers": [
+    {
+      "result": { "version": "HTTP/1.1", "code": 301, "reason": "Moved Permanently" },
+      "location": "https://example.com/final",
+      "content-length": "0"
+    },
+    {
+      "result": { "version": "HTTP/1.1", "code": 302, "reason": "Found" },
+      "location": "https://example.com/final/",
+      "content-length": "0"
+    },
+    {
+      "result": { "version": "HTTP/2", "code": 200, "reason": "" },
+      "content-type": "text/html",
+      "content-length": "1256"
+    }
+  ],
+  "data": "<html>final page</html>",
+  "total_time": 0.4
+}

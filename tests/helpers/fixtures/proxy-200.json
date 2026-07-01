@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "headers": [
+    {
+      "result": { "version": "HTTP/1.1", "code": 200, "reason": "OK" },
+      "content-type": "application/json",
+      "set-cookie": ["session=abc; HttpOnly", "tracker=xyz"]
+    }
+  ],
+  "data": "{\"origin\":\"185.220.101.5\"}",
+  "total_time": 0.341,
+  "proxy": "4DZ3VE",
+  "total": 0.621
+}

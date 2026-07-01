@@ -1,0 +1,5 @@
+{
+  "error": "Backend service unavailable",
+  "backend_status": 503,
+  "detail": "<html><body>Service Unavailable</body></html>"
+}
