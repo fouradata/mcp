@@ -53,7 +53,8 @@ const SingleValidateSchema = z
         accept: z.array(z.number().int()).optional().describe("HTTP status codes to treat as success"),
         fail: z.array(z.number().int()).optional().describe("HTTP status codes to treat as failure"),
       })
-      .optional(),
+      .optional()
+      .describe("Status-code validation: which HTTP status codes count as success (accept) or failure (fail)."),
     headers: z
       .object({
         accept: z
@@ -65,15 +66,18 @@ const SingleValidateSchema = z
           .optional()
           .describe("Map of header-name-substring → header-value-substring (both case-insensitive). Response is treated as FAILURE if ANY entry matches a response header. Use to reject challenge / block headers, e.g. {\"x-blocked\": \"bot\", \"server\": \"cloudflare\"}."),
       })
-      .optional(),
+      .optional()
+      .describe("Header validation: pass when an accepted header matches, fail when a blocklisted header matches."),
     data: z
       .object({
         accept: z.array(z.string()).optional().describe("Substrings the response body must contain"),
         fail: z.array(z.string()).optional().describe("Substrings the response body must NOT contain"),
       })
-      .optional(),
+      .optional()
+      .describe("Body validation: pass when the body contains an expected substring (accept), fail when it contains a blocked one (fail)."),
   })
-  .optional();
+  .optional()
+  .describe("Post-fetch response validation. When the response fails these checks the tool returns an error envelope.");
 
 // the header array - one entry per response in the redirect chain. `result` holds
 // the HTTP status line; all other keys are response header name → value pairs.
@@ -278,7 +282,7 @@ export function registerSingleTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.5 (single)",
+          "User-Agent": "foura-mcp/0.4.6 (single)",
         },
         body: JSON.stringify(upstreamBody),
       });

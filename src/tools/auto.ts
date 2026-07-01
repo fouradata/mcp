@@ -59,7 +59,8 @@ const AutoValidateSchema = z
         accept: z.array(z.number().int()).optional().describe("HTTP status codes to treat as success"),
         fail: z.array(z.number().int()).optional().describe("HTTP status codes to treat as failure"),
       })
-      .optional(),
+      .optional()
+      .describe("Status-code validation: which HTTP status codes count as success (accept) or failure (fail)."),
     headers: z
       .object({
         accept: z
@@ -71,15 +72,18 @@ const AutoValidateSchema = z
           .optional()
           .describe("Map of header-name-substring → header-value-substring (case-insensitive). FAILS if any entry matches a response header (use to reject challenge / block headers)."),
       })
-      .optional(),
+      .optional()
+      .describe("Header validation: pass when an accepted header matches, fail when a blocklisted header matches."),
     data: z
       .object({
         accept: z.array(z.string()).optional().describe("Substrings the final body MUST contain for the fetch to count as solved (CASE-SENSITIVE). Strongly recommended on protected targets so auto can tell a real page from a challenge page."),
         fail: z.array(z.string()).optional().describe("Substrings the final body must NOT contain"),
       })
-      .optional(),
+      .optional()
+      .describe("Body validation: pass when the body contains an expected substring (accept), fail when it contains a blocked one (fail)."),
   })
-  .optional();
+  .optional()
+  .describe("Post-fetch response validation. When the response fails these checks foura_auto returns an error envelope.");
 
 // Response headers come back as an array of per-hop objects (same shape the
 // other tools surface). `result` carries the status line; every other key is a
@@ -307,7 +311,7 @@ export function registerAutoTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.5 (auto)",
+          "User-Agent": "foura-mcp/0.4.6 (auto)",
         },
         body: JSON.stringify(upstreamBody),
         headersTimeout: 200_000,

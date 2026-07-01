@@ -90,7 +90,8 @@ const ProxyValidateSchema = z
         accept: z.array(z.number().int()).optional().describe("HTTP status codes to treat as success"),
         fail: z.array(z.number().int()).optional().describe("HTTP status codes to treat as failure"),
       })
-      .optional(),
+      .optional()
+      .describe("Status-code validation: which HTTP status codes count as success (accept) or failure (fail)."),
     headers: z
       .object({
         accept: z
@@ -102,15 +103,18 @@ const ProxyValidateSchema = z
           .optional()
           .describe("Map of header-name-substring → header-value-substring (both case-insensitive). Response is treated as FAILURE if ANY entry matches a response header. Use to reject challenge / block headers, e.g. {\"x-blocked\": \"bot\", \"server\": \"cloudflare\"}."),
       })
-      .optional(),
+      .optional()
+      .describe("Header validation: pass when an accepted header matches, fail when a blocklisted header matches."),
     data: z
       .object({
-        accept: z.array(z.string()).optional(),
-        fail: z.array(z.string()).optional(),
+        accept: z.array(z.string()).optional().describe("Substrings the response body must contain to pass."),
+        fail: z.array(z.string()).optional().describe("Substrings that, if present in the body, mark the response as failed."),
       })
-      .optional(),
+      .optional()
+      .describe("Body validation: pass when the body contains an expected substring (accept), fail when it contains a blocked one (fail)."),
   })
-  .optional();
+  .optional()
+  .describe("Per-attempt response validation. A proxy attempt that fails these checks is treated as failed and the next proxy is tried.");
 
 // Inner DwRequest - matches the upstream API types/src/single.ts DwRequestSchema
 // (which is what /api/proxy/ inner.request validates against). Method is
@@ -285,7 +289,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.5 (proxy)",
+          "User-Agent": "foura-mcp/0.4.6 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });

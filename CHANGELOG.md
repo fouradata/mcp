@@ -2,6 +2,11 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.6] - 2026-07-01
+### Changed
+- Described the remaining `validate` config groups (status / headers / data) on `foura_single`,
+  `foura_proxy` and `foura_auto`, so every tool input parameter now carries a description.
+
 ## [0.4.5] - 2026-07-01
 ### Changed
 - Every tool input parameter now has a description (added the fine-grained timeout knobs on
