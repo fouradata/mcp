@@ -7,7 +7,7 @@
     "url": "https://github.com/fouradata/mcp",
     "source": "github"
   },
-  "websiteUrl": "https://mcp.foura.ai",
+  "websiteUrl": "https://foura.ai/mcp",
   "packages": [
     {
       "registryType": "npm",
@@ -20,7 +20,7 @@
       "environmentVariables": [
         {
           "name": "FOURA_API_KEY",
-          "description": "Your FourA API key (pk_live_...), created at https://foura.ai/dashboard#api-keys",
+          "description": "Your FourA API key (pk_live_...), created at https://foura.ai/dashboard/#api-keys",
           "isRequired": true,
           "isSecret": true
         }
