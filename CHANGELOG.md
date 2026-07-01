@@ -2,6 +2,14 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.5] - 2026-07-01
+### Changed
+- Every tool input parameter now has a description (added the fine-grained timeout knobs on
+  `foura_single`/`foura_proxy`, the proxy `tryJsonData`/`returnBuffer` flags, and the browser
+  cookie fields).
+- The server now advertises `title`, `description`, `websiteUrl` and an icon in its `initialize`
+  metadata, so clients and registries can show richer listing info.
+
 ## [0.4.4] - 2026-07-01
 ### Changed
 - Capability discovery is now public: `initialize`, `tools/list`, `prompts/list`, `prompts/get`

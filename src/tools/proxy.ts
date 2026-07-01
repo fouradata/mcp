@@ -138,13 +138,13 @@ const ProxyInnerRequestSchema = z
       .optional()
       .describe("Request body."),
     timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Per-attempt timeout in ms"),
-    connect_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-    accept_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-    server_response_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-    dns_cache_timeout_sec: z.number().int().min(0).max(240).optional(),
+    connect_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms for establishing the connection to the target through the proxy (0-120000). Omit for the default."),
+    accept_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms to receive the first response byte after the request is sent (0-120000). Omit for the default."),
+    server_response_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms for the server to send the complete response (0-120000). Omit for the default."),
+    dns_cache_timeout_sec: z.number().int().min(0).max(240).optional().describe("How long (seconds) to cache the target's resolved DNS (0-240). Omit for the default."),
     followRedirects: z.number().int().min(0).max(20).optional().describe("Max number of redirects to follow (0-20). Omit to disable redirect following."),
-    tryJsonData: z.boolean().optional(),
-    returnBuffer: z.boolean().optional(),
+    tryJsonData: z.boolean().optional().describe("If true, attempt JSON.parse on the response body; on success `data` is the parsed value, otherwise it stays the original string. Omit to keep the body as-is."),
+    returnBuffer: z.boolean().optional().describe("Return raw bytes as a serialized Buffer JSON shape ({type:\"Buffer\", data:[byte, ...]}) instead of a decoded string. Use for binary responses (images, protobuf)."),
     validate: ProxyValidateSchema,
   })
   .describe(
@@ -285,7 +285,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.4 (proxy)",
+          "User-Agent": "foura-mcp/0.4.5 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });

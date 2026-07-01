@@ -9,7 +9,19 @@ import { registerPrompts } from "./prompts.js";
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "foura-mcp",
-    version: "0.4.4",
+    title: "FourA",
+    version: "0.4.5",
+    description:
+      "Web scraping for AI agents: fetch any public page via a direct request, a rotating proxy, " +
+      "or a full headless browser, getting past anti-bot challenges.",
+    websiteUrl: "https://foura.ai/mcp",
+    icons: [
+      {
+        src: "https://foura.ai/logo/avatars/4a-transparent-indigo-512.png",
+        mimeType: "image/png",
+        sizes: ["512x512"],
+      },
+    ],
   });
 
   registerSingleTool(server);

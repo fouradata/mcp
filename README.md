@@ -5,6 +5,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@fouradata/mcp?color=cb3837)](https://www.npmjs.com/package/@fouradata/mcp)
 [![provenance signed](https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm)](https://www.npmjs.com/package/@fouradata/mcp)
 [![license MIT](https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f)](./LICENSE)
+[![smithery](https://smithery.ai/badge/foura/foura-mcp)](https://smithery.ai/servers/foura/foura-mcp)
 
 [FourA Web Scraping API](https://foura.ai/) as four [Model Context Protocol](https://modelcontextprotocol.io) tools plus six built-in workflow prompts. Plug it into Claude Desktop, Claude Code, Cursor, Windsurf, or any other MCP client and fetch arbitrary public web pages, bypass anti-bot challenges, and render JavaScript-heavy sites - without writing a line of integration code.
 

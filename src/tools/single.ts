@@ -161,10 +161,10 @@ const singleInputShape = {
   // base36 IDs from the `proxy` string field, and the HTTP engine never reads
   // request.proxyId. Exposing the dead field would silently no-op.
   timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Overall request timeout in ms (max 120000, default 15000)"),
-  connect_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-  accept_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-  server_response_timeout_ms: z.number().int().min(0).max(120_000).optional(),
-  dns_cache_timeout_sec: z.number().int().min(0).max(240).optional(),
+  connect_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms for establishing the TCP/TLS connection (0-120000). Omit to use the default."),
+  accept_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms to receive the first response byte after the request is sent (0-120000). Omit for the default."),
+  server_response_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms for the server to send the complete response (0-120000). Omit for the default."),
+  dns_cache_timeout_sec: z.number().int().min(0).max(240).optional().describe("How long (seconds) to cache the target's resolved DNS (0-240). Omit for the default."),
   followRedirects: z
     .number()
     .int()
@@ -278,7 +278,7 @@ export function registerSingleTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.4 (single)",
+          "User-Agent": "foura-mcp/0.4.5 (single)",
         },
         body: JSON.stringify(upstreamBody),
       });

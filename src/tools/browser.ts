@@ -79,9 +79,9 @@ const BROWSER_API_URL =
   (process.env.FOURA_API_BASE ?? "https://api.foura.ai/api") + "/browser/";
 
 const BrowserCookieInputSchema = z.object({
-  name: z.string(),
-  value: z.string(),
-  domain: z.string().optional(),
+  name: z.string().describe("Cookie name."),
+  value: z.string().describe("Cookie value."),
+  domain: z.string().optional().describe("Cookie domain (e.g. .example.com). Omit to scope it to the navigated URL's host."),
 });
 
 // Full CDP cookie object - captured from Chrome via Network.getAllCookies after navigation.
@@ -227,7 +227,7 @@ export function registerBrowserTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.4 (browser)",
+          "User-Agent": "foura-mcp/0.4.5 (browser)",
         },
         body: JSON.stringify(upstreamBody),
       });
