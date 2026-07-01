@@ -307,7 +307,7 @@ export function registerAutoTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.3.2 (auto)",
+          "User-Agent": "foura-mcp/0.3.3 (auto)",
         },
         body: JSON.stringify(upstreamBody),
         headersTimeout: 200_000,
