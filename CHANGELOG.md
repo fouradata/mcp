@@ -2,6 +2,19 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.4.8] - 2026-07-02
+### Security
+- The HTTP transport no longer falls back to the server's `FOURA_API_KEY` environment variable
+  when a request arrives without a key. Each HTTP request must carry its own
+  `Authorization: Bearer pk_live_...`; the env var is honoured only in stdio mode. This prevents
+  an unauthenticated request from ever borrowing the host operator's key.
+- Bumped the transitive `qs` dependency to 6.15.3, clearing a denial-of-service advisory. No API
+  change.
+- The HTTP server no longer emits the `X-Powered-By` response header.
+### Changed
+- Minimum supported Node is now 22 LTS (was 20, which has reached end-of-life). Node 22 and 24 are
+  the active LTS lines.
+
 ## [0.4.7] - 2026-07-01
 ### Changed
 - Raised the tool-schema token budget 10000 -> 11000 to fit the now fully-described input

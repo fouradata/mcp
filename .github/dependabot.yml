@@ -7,6 +7,12 @@ updates:
     labels:
       - dependencies
     open-pull-requests-limit: 5
+    ignore:
+      # @types/node must track the Node LTS line, not the newest Current.
+      # Major bumps here would pull in a non-LTS typings major (e.g. 26.x while
+      # 24 is Active LTS). Bump this deliberately when a new Node LTS lands.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

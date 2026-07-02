@@ -22,8 +22,20 @@ export function withApiKey<T>(key: string, fn: () => Promise<T>): Promise<T> {
 }
 
 export function getApiKey(): string {
+  // Inside a withApiKey() scope (the HTTP request path) that value is
+  // authoritative - even an empty string. We must NEVER fall through to the
+  // process env in HTTP mode: an unauthenticated request would otherwise
+  // silently borrow the operator's FOURA_API_KEY. The env fallback exists
+  // strictly for stdio mode, where there is no request scope at all
+  // (getStore() === undefined).
   const fromContext = apiKeyContext.getStore();
-  if (fromContext) return fromContext;
+  if (fromContext !== undefined) {
+    if (fromContext) return fromContext;
+    throw new Error(
+      "No API key on this MCP request. Send 'Authorization: Bearer pk_live_...'. " +
+        "Get a key at https://foura.ai/dashboard#api-keys",
+    );
+  }
   const fromEnv = process.env.FOURA_API_KEY;
   if (fromEnv) return fromEnv;
   throw new Error(

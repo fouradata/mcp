@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.4.7";
+const SERVER_VERSION = "0.4.8";
 
 // Spec MUSTs covered in this file:
 //   Origin + Host validation (CVE-2025-66414 DNS rebinding)
@@ -50,6 +50,10 @@ const ALLOWED_ORIGINS = new Set(parseList(
 ));
 
 const app = express();
+
+// Don't advertise the framework (removes the default `X-Powered-By: Express`
+// response header). Minor fingerprinting-reduction; no behavioural change.
+app.disable("x-powered-by");
 
 // cap body size at 256 KB. Real MCP request payloads are <4 KB.
 // Helps mitigate slow-body DoS + memory-exhaustion attacks.
