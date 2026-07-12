@@ -2,6 +2,10 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [Unreleased]
+### Added
+- `foura_proxy` accepts an optional `exitCountries` allowlist and returns the last-synced `exitCountry` on a scoped success. Unknown exits are excluded and no eligible scope is silently dropped.
+
 ## [0.4.8] - 2026-07-02
 ### Security
 - The HTTP transport no longer falls back to the server's `FOURA_API_KEY` environment variable

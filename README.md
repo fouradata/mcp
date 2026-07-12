@@ -131,6 +131,7 @@ Same target shape as `foura_single`, but routed through a pool of proxies with a
 ```jsonc
 {
   "maxTries": 5,
+  "exitCountries": ["CZ", "GB"],
   "request": {
     "method": "GET",
     "url": "https://example.com/pricing",
@@ -139,7 +140,9 @@ Same target shape as `foura_single`, but routed through a pool of proxies with a
 }
 ```
 
-Typical latency 1-5s. `structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded - pass it to `ignoreProxies` next time if it later goes bad) and `total` (outer timing including selection + retries). For tier-1 WAF challenges (Vercel Security Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager) use `maxTries: 25-30` - the default 5 is sized for lightly-blocked sites. If still blocked after 30 attempts the gate is likely country / ASN allowlist (not solvable by rotation) - pivot strategy. If the target needs JavaScript render, chain the returned `proxy` ID into `foura_browser.proxy` - the browser then exits through the IP that already cleared the challenge for this target.
+Typical latency is 1-5s. `structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest country metadata synced from the proxy pool, normally refreshed within ten minutes, and a scoped success returns that value as `exitCountry`. If no locally synced proxy matches, the result uses `code: "no_eligible_proxy"`.
+
+For tier-1 WAF challenges (Vercel Security Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager), use `maxTries: 25-30`. For a country allowlist, set `exitCountries` instead of increasing attempts. An ASN-only denial is a separate constraint. If the target needs JavaScript rendering, chain the returned `proxy` ID into `foura_browser.proxy`.
 
 ### `foura_browser` - full browser session
 

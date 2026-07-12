@@ -121,4 +121,20 @@ describe("proxy outputSchema — fixture parity", () => {
     });
     assert.equal(r.success, true);
   });
+
+  test("19. scoped success accepts exitCountry", () => {
+    const r = S.safeParse({ status: 200, proxy: "4DZ3VE", exitCountry: "CZ", total: 0.5 });
+    assert.equal(r.success, true);
+    assert.equal(r.data?.exitCountry, "CZ");
+    assert.equal(S.safeParse({ status: 200, exitCountry: "USA" }).success, false);
+  });
+
+  test("20. country-scope structured errors validate", () => {
+    assert.equal(S.safeParse({
+      service: "proxy",
+      code: "no_eligible_proxy",
+      error: "country scope failed",
+      details: { exitCountries: ["CZ"] },
+    }).success, true);
+  });
 });

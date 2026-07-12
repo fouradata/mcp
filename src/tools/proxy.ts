@@ -193,6 +193,11 @@ const proxyOutputShape = {
       "pass to foura_single.proxy or foura_browser.proxy → same exit IP. " +
       "Pass to foura_proxy.ignoreProxies → skip this exit on future rotations.",
     ),
+  exitCountry: z
+    .string()
+    .regex(/^[A-Z]{2}$/)
+    .optional()
+    .describe("Last-synced two-letter target-visible exit-country code used for selection. Present on successful requests that use exitCountries."),
   total: z
     .number()
     .optional()
@@ -211,7 +216,7 @@ const proxyOutputShape = {
     .object({ maxConcurrency: z.number().optional(), maxRpm: z.number().optional() })
     .optional(),
   request: z.unknown().optional().describe("Echoed PrRequest from upstream PrResponseError"),
-  code: z.string().optional().describe("Stable error code for retry classification. One of: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), auth_failed (401), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
+  code: z.string().optional().describe("Stable error code for retry classification. Includes no_eligible_proxy when no locally synced proxy matches exitCountries."),
 };
 
 const proxyInputShape = {
@@ -224,7 +229,7 @@ const proxyInputShape = {
     .min(1)
     .max(90)
     .optional()
-    .describe("Maximum proxy rotation attempts before giving up (default 5, max 90). Default 5 is sized for lightly-blocked sites. Raise to 25-30 for tier-1 WAF challenges (Vercel Security Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager) - most rotations on these targets need this range. If still blocked after 30 attempts, the gate is likely country / ASN allowlist (not solvable by rotation) - pivot strategy instead of climbing to 60."),
+    .describe("Maximum proxy rotation attempts before giving up (default 5, max 90). Default 5 is sized for lightly-blocked sites. Raise to 25-30 for tier-1 WAF challenges. For a country allowlist, set exitCountries explicitly; an ASN-only denial is not solved by more rotation attempts."),
   timeout_ms: z
     .number()
     .int()
@@ -236,6 +241,17 @@ const proxyInputShape = {
     .array(z.string())
     .optional()
     .describe("Encoded proxy IDs (base36 strings like \"4DZ3VE\") OR proxy URLs to exclude from rotation. Both forms are accepted."),
+  exitCountries: z
+    .array(
+      z.string()
+        .trim()
+        .transform((code) => code.toUpperCase())
+        .pipe(z.string().regex(/^[A-Z]{2}$/, "Expected a two-letter exit-country code")),
+    )
+    .min(1)
+    .transform((countries) => [...new Set(countries)])
+    .optional()
+    .describe("Optional target-visible proxy countries as two-letter provider codes, for example [\"CZ\", \"GB\"]. Values are trimmed, uppercased, and deduplicated. Unknown exits are excluded and the request never falls back to another country."),
   //  fix - opt-in offload, default false (inline).
   offload_large: z
     .boolean()
@@ -257,9 +273,9 @@ export function registerProxyTool(server: McpServer): void {
         "to skip this exit on the next rotation. Escalate to foura_browser if all proxies fail or the " +
         "page needs JavaScript rendering. When the trigger is a tier-1 WAF challenge (Vercel Security " +
         "Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager), set maxTries to 25-30 - the default " +
-        "5 will usually be too low for these targets. Distinguish from country / ASN allowlist denials " +
-        "(country-licensed bookmakers, government sites): there rotation never helps regardless of " +
-        "maxTries - after ~30 failed attempts on the same block, stop climbing and pivot strategy instead.",
+        "5 will usually be too low for these targets. For a country allowlist, pass exitCountries so " +
+        "every attempt uses the latest target-visible country synced from the proxy pool. ASN-only denials remain a " +
+        "separate constraint and are not solved by increasing maxTries.",
       inputSchema: proxyInputShape,
       outputSchema: proxyOutputShape,
       annotations: {
@@ -339,7 +355,9 @@ export function registerProxyTool(server: McpServer): void {
         total_time?: unknown;
         total?: number;
         proxy?: string;
+        exitCountry?: string;
         error?: unknown;
+        code?: unknown;
         request?: unknown;
       };
 
@@ -360,9 +378,11 @@ export function registerProxyTool(server: McpServer): void {
           structuredContent: {
             ...(parsedObj as Record<string, unknown>),
             service: "proxy" as const,
-            code: innerStatus > 0
-              ? deriveCode(innerStatus, parsedObj as Record<string, unknown>)
-              : "upstream_error",
+            code: typeof parsedObj.code === "string"
+              ? parsedObj.code
+              : innerStatus > 0
+                ? deriveCode(innerStatus, parsedObj as Record<string, unknown>)
+                : "upstream_error",
             status: innerStatus,
           },
         };
@@ -375,6 +395,7 @@ export function registerProxyTool(server: McpServer): void {
 
       const statusLabel = parsedObj.status ?? "?";
       const proxyLabel = parsedObj.proxy ? ` · via ${parsedObj.proxy}` : "";
+      const countryLabel = parsedObj.exitCountry ? ` · exit ${parsedObj.exitCountry}` : "";
 
       const shouldOffload = offload_large === true
         && bodyStr
@@ -386,7 +407,7 @@ export function registerProxyTool(server: McpServer): void {
         const sizeKb = (stored.size / 1024).toFixed(1);
         return {
           content: [
-            { type: "text", text: `${statusLabel} · offloaded ${sizeKb} KB${proxyLabel}` },
+            { type: "text", text: `${statusLabel} · offloaded ${sizeKb} KB${proxyLabel}${countryLabel}` },
             { type: "resource_link", uri: stored.uri, name: stored.name, mimeType: stored.mimeType },
           ],
           structuredContent: {
@@ -394,6 +415,7 @@ export function registerProxyTool(server: McpServer): void {
             headers: parsedObj.headers,
             total_time: parsedObj.total_time as string | number | null | undefined,
             proxy: parsedObj.proxy,
+            exitCountry: parsedObj.exitCountry,
             total: parsedObj.total,
             offloaded_resource_uri: stored.uri,
             size_bytes: stored.size,
@@ -403,7 +425,7 @@ export function registerProxyTool(server: McpServer): void {
 
       const sizeKb = bodyStr ? (Buffer.byteLength(bodyStr, "utf8") / 1024).toFixed(1) : "0";
       return {
-        content: [{ type: "text", text: `${statusLabel} OK · ${sizeKb} KB${proxyLabel}` }],
+        content: [{ type: "text", text: `${statusLabel} OK · ${sizeKb} KB${proxyLabel}${countryLabel}` }],
         structuredContent: parsedObj as Record<string, unknown>,
       };
     }),
