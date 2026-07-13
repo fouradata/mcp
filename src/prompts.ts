@@ -207,9 +207,9 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text",
             text:
-              `Fetch ${url} using the foura_auto tool. It picks the fetch method for you (direct request, rotating proxy, or full browser) and gets past common bot protection automatically - you do not need to choose between foura_single / foura_proxy / foura_browser.\n\n` +
+              `Fetch ${url} using the foura_auto tool. It picks the fetch method for you (direct request, rotating proxy, or full browser) and tries common bot-protection paths - you do not need to choose between foura_single / foura_proxy / foura_browser.\n\n` +
               (must_contain
-                ? `Pass validate.data.accept:["${must_contain}"] so auto keeps escalating until the real page (containing "${must_contain}") comes back, not a challenge page.\n\n`
+                ? `Pass validate.data.accept:["${must_contain}"] so only the real page containing "${must_contain}" counts as success. Auto makes bounded attempts and returns an error if none satisfies the validation.\n\n`
                 : `If the first response looks like a challenge / block page rather than real content, re-call with validate.data.accept:["<a string the real page must contain>"] so auto knows what success looks like.\n\n`) +
               `The response includes completion details and a session ({proxy, cookies, userAgent}). For more pages from the same site, pass session.proxy into the proxy field of foura_single or foura_proxy.\n\n` +
               (extract

@@ -257,7 +257,8 @@ export function registerAutoTool(server: McpServer): void {
         "Give it a public URL and get the content back. This is the default when you don't want to choose " +
         "between HTTP, proxy rotation, and a full browser. On protected targets, or whenever HTTP 200 may " +
         "still be a challenge or incomplete page, pass validate.data.accept with text unique to the real " +
-        "content. Auto keeps trying until the response satisfies it. The response includes completion details and, " +
+        "content. Auto makes bounded attempts and returns either validated content or a failure; it cannot " +
+        "guarantee a match. The response includes completion details and, " +
         "by default, reusable session values for follow-up calls. Use a lower-level tool when you need " +
         "direct control over HTTP, proxy selection, or browser navigation.",
       inputSchema: autoInputShape,

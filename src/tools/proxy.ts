@@ -221,8 +221,8 @@ const proxyOutputShape = {
       exitCountries: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1),
     })
     .optional()
-    .describe("Structured no_eligible_proxy context containing the normalized requested country scope. Preserve this scope unless the user explicitly changes the requirement."),
-  code: z.string().optional().describe("Stable error code for retry classification. no_eligible_proxy means the strict exitCountries scope had no match; retrying without that scope requires an explicit user decision."),
+    .describe("Structured no_eligible_proxy context containing the normalized requested country scope. Preserve this scope and retry later. Do not propose or perform an unscoped fallback; change it only after the user explicitly changes the requirement."),
+  code: z.string().optional().describe("Stable error code for retry classification. no_eligible_proxy means the strict exitCountries scope had no match. Keep that scope and retry later; do not propose or perform an unscoped fallback."),
 };
 
 const proxyInputShape = {
