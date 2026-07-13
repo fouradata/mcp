@@ -12,18 +12,17 @@ read-only (`readOnlyHint: true`) and reach the open web (`openWorldHint: true`).
 ## Tools (four)
 
 - **`foura_auto`** - the default. Give it a `url`; it returns the content and picks the fetch
-  method for you, escalating from a fast direct request to a rotating proxy to a full browser only
-  as far as the target forces it. Use this first unless you need explicit control. Optional
+  method for you. Use this first unless you need explicit control. Optional
   `validate.data.accept` lets it tell a real page from a challenge page.
-- **`foura_single`** - one fast HTTP request (200ms-2s). Static pages and JSON APIs. Set
+- **`foura_single`** - one fast HTTP request. Static pages and JSON APIs. Set
   `unblocker: true` for wire-level anti-bot targets.
-- **`foura_proxy`** - the same request through a rotating proxy pool with retry. Use for WAF
-  challenges (Cloudflare, Vercel, Akamai); set `maxTries: 25-30` for tier-1 WAFs.
+- **`foura_proxy`** - the same request through a rotating proxy pool with retry. Use when a
+  direct request is blocked; difficult protected targets may need `maxTries: 25-30`.
 - **`foura_browser`** - a real browser session; JavaScript runs and the DOM finishes rendering.
   Use for SPAs and lazy-loaded content.
 
 The primitives compose: `foura_proxy` returns a base36 proxy ID; pass it into
-`foura_single.proxy` or `foura_browser.proxy` to exit through the same IP (sticky session).
+`foura_single.proxy` or `foura_browser.proxy` to reuse the same exit.
 
 ## Prompts (six)
 
@@ -41,7 +40,7 @@ relevant, `status` / `retryAfter`. Read `code` for retry logic: `rate_limited`, 
 ## Auth
 
 One API key (`FOURA_API_KEY` in stdio, or `Authorization: Bearer` on the hosted endpoint). Keys
-are created at https://foura.ai/dashboard/#api-keys.
+can be created or revealed at https://foura.ai/dashboard/#api-keys.
 
 ## Limits
 
@@ -50,4 +49,4 @@ concurrency limits are enforced per service. See https://foura.ai/docs/mcp/serve
 
 ---
 
-FourA web scraping API: https://foura.ai  ·  MCP server page: https://foura.ai/mcp  ·  Docs: https://foura.ai/docs/mcp/server
+FourA: https://foura.ai | MCP server: https://foura.ai/mcp | Docs: https://foura.ai/docs/mcp/server

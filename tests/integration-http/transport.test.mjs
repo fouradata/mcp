@@ -7,7 +7,7 @@ const TEST_KEY = process.env.FOURA_API_KEY
   ?? process.env.DW_TEST_API_KEY;
 const BASE = process.env.FOURA_MCP_HTTP_URL ?? "https://mcp.foura.ai/mcp";
 
-describe("mcp.foura.ai — Streamable HTTP transport", () => {
+describe("mcp.foura.ai - Streamable HTTP transport", () => {
   test("1. initialize succeeds with Bearer", async () => {
     const c = new HttpClient({ apiKey: TEST_KEY });
     const r = await c.initialize();
@@ -17,7 +17,7 @@ describe("mcp.foura.ai — Streamable HTTP transport", () => {
     }
   });
 
-  test("2. missing Bearer → 401", async () => {
+  test("2. missing Bearer -> 401", async () => {
     const res = await request(BASE, {
       method: "POST",
       headers: {
@@ -33,7 +33,7 @@ describe("mcp.foura.ai — Streamable HTTP transport", () => {
     res.body.dump?.();
   });
 
-  test("3. invalid Bearer → upstream auth_failed", async () => {
+  test("3. invalid Bearer -> upstream auth_failed", async () => {
     const c = new HttpClient({ apiKey: "pk_live_invalid_xxx" });
     const r = await c.initialize();
     // Either MCP server rejects upstream when first tool runs, or initialize
@@ -41,7 +41,7 @@ describe("mcp.foura.ai — Streamable HTTP transport", () => {
     assert.ok(r.result || r.error || r.http);
   });
 
-  test("4. GET /mcp → 405", async () => {
+  test("4. GET /mcp -> 405", async () => {
     const res = await request(BASE, {
       method: "GET",
       headers: { Authorization: `Bearer ${TEST_KEY}` },
@@ -50,7 +50,7 @@ describe("mcp.foura.ai — Streamable HTTP transport", () => {
     res.body.dump?.();
   });
 
-  test("5. DELETE /mcp → 405", async () => {
+  test("5. DELETE /mcp -> 405", async () => {
     const res = await request(BASE, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${TEST_KEY}` },

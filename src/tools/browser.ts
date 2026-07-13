@@ -84,8 +84,7 @@ const BrowserCookieInputSchema = z.object({
   domain: z.string().optional().describe("Cookie domain (e.g. .example.com). Omit to scope it to the navigated URL's host."),
 });
 
-// Full CDP cookie object - captured from Chrome via Network.getAllCookies after navigation.
-// Permissive - Protocol.Network.Cookie has more fields than we model, and CDP versions vary.
+// Browser cookie fields vary by version, so the schema accepts additional properties.
 const CdpCookieSchema = z
   .object({
     name: z.string(),
@@ -104,21 +103,20 @@ const CdpCookieSchema = z
 const browserOutputShape = {
   // Success - the upstream response shape
   status: z.number().int().optional().describe("HTTP status code from the target page. `0` indicates the navigation failed before any HTTP response (DNS / connection refused / timeout) - check the `error` field for the underlying reason."),
-  // CDP headers (Protocol.Network.Headers) are a Record but values can be
-  // string OR string[] in some CDP versions.  fix - permissive.
+  // Header values can be a string or an array of strings.
   headers: z
     .record(z.string(), z.unknown())
     .optional()
     .describe("Response headers as a flat key-value object. Values are typically strings but may be arrays for repeated headers."),
-  // body: string | object in upstream (browser/src/schema.ts:25).  fix.
+  // Browser output can contain either HTML text or parsed JSON.
   body: z
     .union([z.string(), z.record(z.string(), z.unknown())])
     .optional()
     .describe("Fully-rendered page content. String HTML when content-type is HTML; object when the page returned JSON and it was auto-parsed. Field is named `body`, not `data`. Omitted when offloaded."),
-  cookies: z.array(CdpCookieSchema).optional().describe("Full cookie objects collected after navigation (name, value, domain, path, expires, httpOnly, secure, session, sameSite, …)"),
+  cookies: z.array(CdpCookieSchema).optional().describe("Full cookie objects collected after navigation, including name, value, domain, path, expiry, and same-site settings."),
   userAgent: z.string().optional().describe("The User-Agent the browser session presented"),
-  // Offload path - MCP layer adds these when body >= 50KB AND offload_large=true
-  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>"),
+  // Resource-link fields used when the response body is offloaded.
+  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
   size_bytes: z.number().int().optional().describe("Total offloaded body size in bytes"),
   // Error path
   error: z.string().optional().describe("Human-readable error message"),
@@ -134,11 +132,11 @@ const browserOutputShape = {
 };
 
 const browserInputShape = {
-  url: z.string().url().describe("Target URL to load in a full browser session. Public hosts only - private/reserved ranges (RFC 1918 + loopback + link-local + IPv6 ULA/loopback + *.local mDNS) are refused with code `ssrf_blocked`. Example: https://shop.example.com/product/123 or any single-page-app URL."),
+  url: z.string().url().describe("Public URL to load in a full browser session. Private or reserved targets return `ssrf_blocked`. Example: https://shop.example.com/product/123."),
   headers: z
     .record(z.string(), z.string())
     .optional()
-    .describe("Custom HTTP headers as a key-value object (NOT [name, value] tuples). Example: {\"Referer\": \"https://google.com/\"}"),
+    .describe("Custom HTTP headers as a key-value object rather than [name, value] tuples. Example: {\"Referer\": \"https://google.com/\"}"),
   cookies: z
     .array(BrowserCookieInputSchema)
     .optional()
@@ -149,7 +147,8 @@ const browserInputShape = {
     .optional()
     .describe(
       "Optional proxy. Three forms: (1) URL `http://user:pass@host:port` or `socks5://host:port`; " +
-      "(2) base36 ID from foura_proxy (e.g. `4DZ3VE`) - same pool exit IP; (3) omit → fixed container egress.",
+      "(2) base36 ID from foura_proxy (e.g. `4DZ3VE`) to reuse the same exit; " +
+      "(3) omit to use the default route.",
     ),
   timeout_ms: z
     .number()
@@ -162,20 +161,19 @@ const browserInputShape = {
     .number()
     .int()
     .optional()
-    .describe("Expected HTTP status code. If the page returns a different status → tool returns an error envelope with the actual status carried in the envelope. Example: 200 for product pages, or 404 to assert a soft-404 didn't leak through."),
+    .describe("Expected HTTP status code. A different status returns an error envelope carrying the actual value. Example: 200 for a product page."),
   checkText: z
     .string()
     .optional()
-    .describe("One-shot post-render validator - substring search on the rendered HTML AFTER navigation completes. NOT a waiter: does not poll, does not block until the substring appears. If the substring is missing, the tool returns an error envelope. Use to catch silent failures like a 200 response that captured a challenge page or empty SPA shell. Example: \"add to cart\" for product pages."),
+    .describe("Validate the rendered HTML once navigation completes. This is a substring check, not a waiter, and it doesn't poll. A missing substring returns an error envelope. Example: \"add to cart\" for a product page."),
   unblocker: z
     .boolean()
     .optional()
-    .describe("Actively SOLVE an anti-bot / captcha challenge (Cloudflare Turnstile and similar) encountered during navigation, instead of just rendering it. Default true. Set false to render and return the page exactly as it loads - including a challenge page - without attempting to solve; cheaper when you already know the target is open or you want the raw challenge page."),
-  //  fix - opt-in offload, default false (inline).
+    .describe("Handle supported anti-bot or captcha challenges during navigation. Default true. Set false to return the page exactly as it loads, including any challenge page."),
   offload_large: z
     .boolean()
     .optional()
-    .describe("If true, response bodies >= 50KB are written to disk and returned as a resource_link instead of inlined. Default false."),
+    .describe("If true, response bodies of 50 KB or more are returned as a resource_link instead of inlined. Default false. Read the returned offloaded_resource_uri with resources/read."),
 };
 
 export function registerBrowserTool(server: McpServer): void {
@@ -184,20 +182,10 @@ export function registerBrowserTool(server: McpServer): void {
     {
       title: "FourA - full browser navigation",
       description:
-        "Load a URL in a real browser session. JS runs, DOM renders, cookies come back. 2-10s. " +
-        "Use for SPAs, lazy-loaded content, or JS anti-bot challenges (Cloudflare Turnstile etc.). " +
-        "Prefer foura_single for static HTML; foura_proxy for static pages where your IP is blocked. " +
-        "To rotate the browser's exit IP: call foura_proxy first, pass its returned `proxy` ID into " +
-        "this tool's `proxy` field - the browser exits through that pool IP. Default (no `proxy`) " +
-        "is one fixed container egress. If the target is behind a tier-1 WAF challenge (Vercel / " +
-        "Cloudflare / Akamai), calling this tool directly will usually still capture the challenge " +
-        "page rather than the post-challenge content - the snapshot fires before the challenge's " +
-        "deferred reload completes. Correct chain: call foura_proxy first with maxTries:25-30 against " +
-        "the same URL → take the returned proxy base36 ID → pass it into this tool's `proxy` field. " +
-        "The browser then exits through the IP that already cleared the challenge for this target. " +
-        "By default the browser actively solves an anti-bot / captcha challenge it meets along the way " +
-        "(the `unblocker` flag, default true); set `unblocker:false` to skip solving and return the " +
-        "page exactly as it loads, challenge page included.",
+        "Load a public URL in a full browser session. JavaScript runs, the DOM renders, and cookies " +
+        "come back with the response. Use it for single-page apps, lazy-loaded content, or supported " +
+        "browser challenges. For a protected page, call foura_proxy first and pass its returned " +
+        "proxy ID here to reuse that exit. Set unblocker:false when you want the page exactly as it loads.",
       inputSchema: browserInputShape,
       outputSchema: browserOutputShape,
       annotations: {
@@ -227,7 +215,7 @@ export function registerBrowserTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.8 (browser)",
+          "User-Agent": "foura-mcp/0.5.0 (browser)",
         },
         body: JSON.stringify(upstreamBody),
       });
@@ -279,9 +267,7 @@ export function registerBrowserTool(server: McpServer): void {
         error?: unknown;
       };
 
-      //  fix - browser request.ts also rejects with DwResponseError on
-      // page failure (timeout, navigation error, checkStatus mismatch).
-      // Service forwards as 200 + {error, ...} via dwRequestToExpressRes.
+      // A transport-200 response can still carry a navigation or validation error.
       if (typeof parsedObj.error === "string" && parsedObj.error.length > 0) {
         const innerStatus = typeof parsedObj.status === "number" ? parsedObj.status : 0;
         return {

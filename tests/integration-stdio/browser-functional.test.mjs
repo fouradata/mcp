@@ -10,7 +10,7 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-describe("foura_browser — functional paths", () => {
+describe("foura_browser - functional paths", () => {
   test("1. example.com renders, returns body + userAgent", async () => {
     const r = await client.callTool("foura_browser", { url: TEST_SITES.static }, TWO_MIN);
     assertSuccess(r);
@@ -22,7 +22,7 @@ describe("foura_browser — functional paths", () => {
   });
 
   test("1b. unblocker:false renders the page as-is (field forwards, open target)", async () => {
-    // example.com has no challenge, so unblocker has no visible effect — the
+    // example.com has no challenge, so unblocker has no visible effect - the
     // point is that the canonical defense-solver flag forwards without breaking
     // and the page still renders. Pool/render nondeterminism tolerated.
     const r = await client.callTool("foura_browser", {
@@ -84,16 +84,16 @@ describe("foura_browser — functional paths", () => {
     assertSuccess(r);
   });
 
-  test("6. checkText failure → structured error (regression path)", async () => {
+  test("6. checkText failure -> structured error (regression path)", async () => {
     const r = await client.callTool("foura_browser", {
       url: TEST_SITES.static, checkText: "NOT_PRESENT_STRING_xyz_12345",
     }, TWO_MIN);
-    // the upstream API browser surfaces this via DwResponseError → handler flags isError.
+    // The API surfaces this as an error body, so the handler flags isError.
     assert.equal(r.isError, true, `expected error for checkText mismatch, got success`);
     assertEnvelope(r, "browser");
   });
 
-  test("7. checkStatus match → success", async () => {
+  test("7. checkStatus match -> success", async () => {
     const r = await client.callTool("foura_browser", {
       url: TEST_SITES.static, checkStatus: 200,
     }, TWO_MIN);

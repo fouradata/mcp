@@ -1,14 +1,7 @@
 #!/usr/bin/env node
 /**
- * Token-bloat audit — measure how many tokens the LLM pays per turn just to
- * "know about" our tools. MCP clients inject tools/list into the system prompt
- * on every message; this cost is paid forever until the LLM rotates context.
- *
- * Estimate: chars / 3.5 (conservative for English/JSON mix; Claude tokenizer
- * is internal — this approximation overestimates slightly, which is what we
- * want for a safety gate).
- *
- * Fails (exit 1) if total exceeds BUDGET. Use env BUDGET_TOKENS=N to override.
+ * Estimate the serialized tools/list size and fail when it exceeds the context budget.
+ * Set BUDGET_TOKENS to override the default ceiling.
  */
 
 import { spawn } from "node:child_process";
@@ -16,21 +9,7 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
-// Token budget for the combined tool/list payload sent to clients on every
-// session init. Raised 5000 → 6000 in v0.2.3 (cross-tool reuse hints), then
-// 6000 → 6500 in v0.2.8 (validate.headers semantics + error-code enum), then
-// 6500 → 7000 in v0.2.10 (WAF escalation discoverability — agent decision-tree
-// content moved into tools/list so agents don't have to reach for docs). Real
-// ceiling for "still fits without being a context tax" is around 7500; keep
-// headroom.
-// Raised 7000 -> 10000 in v0.3.0 for the FOURTH tool, foura_auto (the
-// smart-default orchestrator, ~2.7k tok). The three primitives were KEPT in
-// full -- auto is an additional entry point, not a replacement, so its cost is
-// additive by design. The "context tax" ceiling for FOUR tools sits ~10500.
-// Raised 10000 -> 11000 in v0.4.7: every tool input parameter now carries a
-// description (MCP-registry quality signals + better agent guidance). The fuller
-// input schemas cost ~560 more tokens; still a modest per-session cost for four
-// fully-documented tools. Trim descriptions before raising this further.
+// Keep enough room for all four tool schemas without letting descriptions grow unchecked.
 const BUDGET = Number(process.env.BUDGET_TOKENS ?? 11000);
 const CHARS_PER_TOKEN = 3.5;
 
@@ -99,7 +78,7 @@ if (tools.length === 0) {
 let total = 0;
 console.log(`\nToken budget: ${BUDGET}  (chars/${CHARS_PER_TOKEN} estimate)\n`);
 console.log("Per-tool breakdown:");
-console.log("─".repeat(70));
+console.log("-".repeat(70));
 
 for (const t of tools) {
   const nameChars = (t.name ?? "").length;
@@ -114,15 +93,15 @@ for (const t of tools) {
     `(name:${nameChars} title:${titleChars} desc:${descChars} schema:${schemaChars})`);
 }
 
-console.log("─".repeat(70));
+console.log("-".repeat(70));
 console.log(`  ${"TOTAL".padEnd(20)} ~${String(total).padStart(4)} tok / ${BUDGET} budget`);
 console.log("");
 
 if (total > BUDGET) {
-  console.error(`❌ Token budget exceeded: ${total} > ${BUDGET}`);
+  console.error(`FAIL: Token budget exceeded: ${total} > ${BUDGET}`);
   console.error(`   Trim tool descriptions or schema annotations.`);
   process.exit(1);
 }
 
-console.log(`✓ Within budget (${BUDGET - total} tokens headroom)`);
+console.log(`PASS: Within budget (${BUDGET - total} tokens headroom)`);
 process.exit(0);

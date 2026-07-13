@@ -1,4 +1,4 @@
-// regression regression — Set-Cookie array, multi-value headers across all 3 tools.
+// Regression coverage for Set-Cookie arrays and multi-value headers across all 3 tools.
 // THE MOST IMPORTANT TEST FILE. If this fails, no commercial site works.
 import { test, before, after, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -12,8 +12,8 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-describe("regression regression — multi-value HTTP headers", () => {
-  test("1. foura_single + 2 Set-Cookie roundtrips with followRedirects (a real-world
+describe("multi-value HTTP header regression", () => {
+  test("1. foura_single + 2 Set-Cookie values survive a redirect chain", async () => {
     // httpbin /cookies/set returns 302 with Set-Cookie headers, then redirects
     // to /cookies. With followRedirects:5 the header array chain captures the
     // 302's Set-Cookie array. THIS is the array-shape that broke validation
@@ -50,7 +50,7 @@ describe("regression regression — multi-value HTTP headers", () => {
       return;
     }
     const setCookies = extractSetCookies(r.structuredContent.headers);
-    assert.ok(setCookies.length >= 2, `proxy Set-Cookie missing — got ${JSON.stringify(setCookies)}`);
+    assert.ok(setCookies.length >= 2, `proxy Set-Cookie missing - got ${JSON.stringify(setCookies)}`);
   });
 
   test("3. foura_single + 3 Set-Cookie values", async () => {
@@ -77,7 +77,7 @@ describe("regression regression — multi-value HTTP headers", () => {
     assert.ok(setCookies.length >= 1);
   });
 
-  test("5. foura_single example.com (regression control — no cookies, still works)", async () => {
+  test("5. foura_single example.com (regression control - no cookies, still works)", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET",
       url: TEST_SITES.static,
@@ -96,7 +96,7 @@ describe("regression regression — multi-value HTTP headers", () => {
     }, TWO_MIN);
     if (r.isError) {
       // Browser can occasionally bounce on httpbin redirects. Document the
-      // failure mode but don't flake the suite — the schema-level regression fix
+      // failure mode but don't flake the suite - the schema-level regression fix
       // is fully covered by tests 1-4 against single + proxy.
       assert.equal(r.structuredContent?.service, "browser");
       return;

@@ -8,7 +8,7 @@ startCommand:
       FOURA_API_KEY:
         type: string
         title: FourA API key
-        description: Your FourA API key (pk_live_...), created at foura.ai/dashboard#api-keys
+        description: Your FourA API key (pk_live_...), managed at foura.ai/dashboard/#api-keys
         format: password
   commandFunction: |
     (config) => ({

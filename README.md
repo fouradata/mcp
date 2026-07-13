@@ -1,15 +1,35 @@
 <!-- mcp-name: ai.foura/mcp -->
-# @fouradata/mcp
+<p align="center">
+  <a href="https://foura.ai/mcp"><img src="https://foura.ai/logo/avatars/4a-transparent-indigo-512.png" width="96" alt="FourA"></a>
+</p>
 
-[![npm version](https://img.shields.io/npm/v/@fouradata/mcp?logo=npm&color=cb3837)](https://www.npmjs.com/package/@fouradata/mcp)
-[![npm downloads](https://img.shields.io/npm/dm/@fouradata/mcp?color=cb3837)](https://www.npmjs.com/package/@fouradata/mcp)
-[![provenance signed](https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm)](https://www.npmjs.com/package/@fouradata/mcp)
-[![license MIT](https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f)](./LICENSE)
-[![smithery badge](https://smithery.ai/badge/foura/mcp)](https://smithery.ai/servers/foura/mcp)
+<h1 align="center">FourA MCP</h1>
 
-[FourA Web Scraping API](https://foura.ai/) as four [Model Context Protocol](https://modelcontextprotocol.io) tools plus six built-in workflow prompts. Plug it into Claude Desktop, Claude Code, Cursor, Windsurf, or any other MCP client and fetch arbitrary public web pages, bypass anti-bot challenges, and render JavaScript-heavy sites - without writing a line of integration code.
+<p align="center"><strong>Reliable web access for AI agents.</strong></p>
 
-Four tools, six prompts, one API key. One smart `foura_auto` tool picks the fetch method for you (direct, proxy, or full browser); drop to the primitives when you want explicit control. Published to npm with build [provenance](https://docs.npmjs.com/generating-provenance-statements) - the tarball is cryptographically traceable to this repo and CI run.
+<p align="center">
+  Give your agent a public URL. FourA returns the content, whether the page needs a fast HTTP request,
+  proxy rotation, or a full browser session.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@fouradata/mcp"><img src="https://img.shields.io/npm/v/@fouradata/mcp?logo=npm&color=cb3837" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@fouradata/mcp"><img src="https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm" alt="npm provenance"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f" alt="MIT license"></a>
+  <a href="https://smithery.ai/servers/foura/mcp"><img src="https://smithery.ai/badge/foura/mcp" alt="FourA on Smithery"></a>
+</p>
+
+Start with `foura_auto`: one URL in, typed content out. It chooses the appropriate fetch method and handles common blocks for you. Use `foura_single`, `foura_proxy`, or `foura_browser` when you want explicit control over the request path.
+
+| Start simple | Reach difficult pages | Build predictable agent flows |
+|---|---|---|
+| One default tool for most URLs | HTTP, proxy rotation, and full-browser rendering | Typed outputs, stable error codes, and six ready-made prompts |
+
+The included workflows cover product extraction, article cleanup, price monitoring, endpoint checks, and bulk URL fetching.
+
+Use it from Claude Desktop, Claude Code, Cursor, Windsurf, VS Code, or any MCP client. Run the npm package locally or connect to the hosted Streamable HTTP endpoint with the same FourA API key.
+
+**[Get an API key](https://foura.ai/dashboard/#api-keys) | [Read the MCP docs](https://foura.ai/docs/mcp/server) | [See the package on npm](https://www.npmjs.com/package/@fouradata/mcp)**
 
 **One-click install:**
 
@@ -18,11 +38,9 @@ Four tools, six prompts, one API key. One smart `foura_auto` tool picks the fetc
 
 Both buttons pre-fill the config with a `YOUR_FOURA_API_KEY` placeholder - replace it with your key. Or by hand: `claude mcp add foura -- npx -y @fouradata/mcp` (set `FOURA_API_KEY` in env first). Full per-client setup below.
 
-[FourA](https://foura.ai) - [MCP page](https://foura.ai/mcp) - [GitHub](https://github.com/fouradata/mcp) - [npm](https://www.npmjs.com/package/@fouradata/mcp) - [Docs](https://foura.ai/docs/mcp/server) - [Hosted endpoint](https://mcp.foura.ai/mcp)
-
 ## Quick Start - local stdio (recommended for Claude Desktop)
 
-Grab a key at [foura.ai/dashboard/#api-keys](https://foura.ai/dashboard/#api-keys) (one click, shown once on creation, format `pk_live_...`). Then drop this into your MCP client's config:
+Create or reveal an API key at [foura.ai/dashboard/#api-keys](https://foura.ai/dashboard/#api-keys) (format `pk_live_...`). Then drop this into your MCP client's config:
 
 ```json
 {
@@ -40,7 +58,7 @@ Grab a key at [foura.ai/dashboard/#api-keys](https://foura.ai/dashboard/#api-key
 
 > **Claude Desktop gotcha:** fully quit Claude Desktop (`Cmd+Q` on macOS) **before** editing the config file. If the app is still running, it will overwrite your edits with its in-memory config on exit.
 
-The npx command downloads the package on first launch (~10s) and runs it as a subprocess of your MCP client. No global install needed. Same JSON works in every major client - just point it at the right file:
+The npx command downloads the package on first launch and runs it as a subprocess of your MCP client. No global install needed. The same JSON works across MCP clients; only the config-file location changes:
 
 | Client | Where the config lives |
 |---|---|
@@ -55,7 +73,7 @@ Restart the client and `foura_auto`, `foura_single`, `foura_proxy`, `foura_brows
 
 ## Quick Start - hosted (Streamable HTTP)
 
-For clients that support the Streamable HTTP transport (Cursor, Windsurf, VS Code, Claude Code with `--transport http`), point them at the hosted endpoint instead of running a local subprocess:
+If your client supports the Streamable HTTP transport, point it at the hosted endpoint instead of running a local subprocess:
 
 ```json
 {
@@ -70,7 +88,7 @@ For clients that support the Streamable HTTP transport (Cursor, Windsurf, VS Cod
 }
 ```
 
-Current Claude Desktop builds reject the bare `url` form - use the stdio config above for Claude Desktop, or bridge through `mcp-remote`:
+For Claude Desktop, use the stdio config above. You can also bridge the hosted endpoint through `mcp-remote`:
 
 ```json
 {
@@ -85,20 +103,20 @@ Current Claude Desktop builds reject the bare `url` form - use the stdio config 
 
 ## The Tools
 
-`foura_auto` is the **default** - give it a URL and it returns the content, picking the fetch method for you. The other three are the lower-level primitives it orchestrates; reach for them when you want explicit control.
+`foura_auto` is the **default** - give it a URL and it returns the content, choosing the fetch method for you. The other three tools give you direct control over HTTP, proxy rotation, and browser rendering.
 
-All four are marked `readOnlyHint: true` and `openWorldHint: true` per the [MCP spec](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) - clients that auto-approve trusted read-only tools (Claude Desktop, Cursor in 2026) call them without a per-request confirmation modal.
+All four are marked `readOnlyHint: true` and `openWorldHint: true` per the [MCP specification](https://modelcontextprotocol.io/specification). Clients can use those annotations when deciding how to present or approve tool calls.
 
-Every response carries both human-readable text (`content`) and a typed `structuredContent` JSON object validated against the tool's `outputSchema`. Clients pass `structuredContent` to your LLM natively, skipping the re-tokenization tax on stringified JSON.
+Every response carries human-readable text (`content`) plus a typed `structuredContent` JSON object validated against the tool's `outputSchema`. Your agent gets a predictable response contract instead of parsing prose.
 
 ### `foura_auto` - smart fetch (the default)
 
-Give a URL, get the content back. Use this first when you just want the page and don't want to choose a method. Internally it walks a cost-aware ladder - a fast direct request, then a rotating proxy, then a full browser session - escalating only as far as the target forces it, solving common bot challenges on the way, and cheaply replaying a warm session on repeat calls to the same host. It learns the right settings per host, so there are no `maxTries` / pool / retry knobs to tune.
+Give it a URL and get the content back. Use this first when you don't want to choose between HTTP, proxy rotation, and browser rendering. It handles common bot challenges and keeps the client surface small, with no proxy-attempt tuning required.
 
 ```jsonc
 {
   "url": "https://example.com",
-  // optional: a substring the REAL page must contain, so auto can tell a
+  // optional: a substring the real page must contain, so auto can tell a
   // real page from a challenge page on protected targets
   "validate": { "data": { "accept": ["Example Domain"] } }
 }
@@ -106,11 +124,11 @@ Give a URL, get the content back. Use this first when you just want the page and
 
 The client surface is intentionally minimal: `url` (required), plus optional `method`, `headers`, `data`, `validate`, `returnSession` (default `true`), `forceProxy` (default `true`), `timeout_ms` (5000-180000, default 120000), `ignoreProxies`.
 
-`structuredContent` shape: `{status, headers, data, meta, session}`. `meta` is always present - `{rung, solved, attempts, credits}` - the trace of which rung delivered and what it cost. `session` (`{proxy, cookies, userAgent}`) is returned by default so you can replay the same session through `foura_single` / `foura_proxy` afterwards (pass `session.proxy` into their `proxy` field). Send `returnSession: false` to omit it. There is no `total_time` field on auto.
+`structuredContent` shape: `{status, headers, data, meta, session}`. `meta` is always present - `{rung, solved, attempts, credits}` - so your agent can see how the request completed and how many credits it used. `session` (`{proxy, cookies, userAgent}`) is returned by default for follow-up requests (pass `session.proxy` into the `proxy` field). Send `returnSession: false` to omit it. There is no `total_time` field on auto.
 
 ### `foura_single` - fast HTTP
 
-One HTTP request, response back. Typically 200ms-2s. Use it for static pages, JSON APIs, server-rendered HTML - the bread and butter of scraping. Set `unblocker: true` if the target is picky about wire-level signals.
+One HTTP request, response back. Use it for static pages, JSON APIs, and server-rendered HTML. Set `unblocker: true` if the target is picky about wire-level signals.
 
 ```jsonc
 {
@@ -120,17 +138,18 @@ One HTTP request, response back. Typically 200ms-2s. Use it for static pages, JS
 }
 ```
 
-Supports custom headers, a body, per-stage timeouts, redirect controls, JSON auto-parse, a binary-buffer mode, and built-in response validation (`validate.status.accept`, `validate.data.fail`, and so on). If `foura_single` comes back blocked - status 403/429, captcha page, OR response headers `x-vercel-mitigated: challenge` / `cf-mitigated: challenge`, OR body title matches `Vercel Security Checkpoint` / `Just a moment` / `Attention Required` - escalate to `foura_proxy` with `maxTries: 25-30` for these tier-1 WAFs. If the page also needs JavaScript to render, chain `foura_proxy`'s returned `proxy` ID into `foura_browser.proxy`.
+Supports custom headers, a body, per-stage timeouts, redirect controls, JSON auto-parse, a binary-buffer mode, and built-in response validation (`validate.status.accept`, `validate.data.fail`, and so on). If `foura_single` comes back blocked - status 403/429, a captcha page, challenge response headers, or a known challenge title - escalate to `foura_proxy`. Start with `maxTries: 5`; protected targets may need `25-30`. If the page also needs JavaScript to render, pass `foura_proxy`'s returned `proxy` ID to `foura_browser.proxy`.
 
 `structuredContent` shape: `{status, headers, data, total_time, ...}`.
 
 ### `foura_proxy` - rotating proxies with retry
 
-Same target shape as `foura_single`, but routed through a pool of proxies with automatic retry on failure. Per-host scoring picks the proxies most likely to succeed against this particular target, so you're not burning attempts on known-bad routes.
+Same target shape as `foura_single`, but routed through rotating proxies with automatic retry on failure. Use it when a direct request is blocked or when the target requires a specific exit country.
 
 ```jsonc
 {
   "maxTries": 5,
+  "exitCountries": ["CZ", "GB"],
   "request": {
     "method": "GET",
     "url": "https://example.com/pricing",
@@ -139,7 +158,9 @@ Same target shape as `foura_single`, but routed through a pool of proxies with a
 }
 ```
 
-Typical latency 1-5s. `structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded - pass it to `ignoreProxies` next time if it later goes bad) and `total` (outer timing including selection + retries). For tier-1 WAF challenges (Vercel Security Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager) use `maxTries: 25-30` - the default 5 is sized for lightly-blocked sites. If still blocked after 30 attempts the gate is likely country / ASN allowlist (not solvable by rotation) - pivot strategy. If the target needs JavaScript render, chain the returned `proxy` ID into `foura_browser.proxy` - the browser then exits through the IP that already cleared the challenge for this target.
+`structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
+
+For difficult WAF challenges, use `maxTries: 25-30`. For a country allowlist, set `exitCountries` instead of increasing attempts. If the target needs JavaScript rendering, pass the returned `proxy` ID to `foura_browser.proxy`.
 
 ### `foura_browser` - full browser session
 
@@ -153,7 +174,7 @@ A real browser session. JavaScript runs, the DOM finishes rendering, cookies com
 }
 ```
 
-Slowest of the lower-level tools (2-10s) but the only tool that handles JavaScript end-to-end. `checkText` is a one-shot post-render validator (substring search on the rendered HTML AFTER navigation completes - not a waiter, does not poll): if the substring is missing, the call fails with an error envelope. Useful when a page returns 200 but the actual content is missing. `unblocker` defaults to `true` - the session actively solves an anti-bot / captcha challenge (Cloudflare Turnstile and similar) it meets along the way; set `unblocker: false` to render and return the page exactly as it loads, challenge page included.
+Use this when an HTTP response isn't enough. `checkText` validates the rendered HTML once navigation completes; it doesn't wait or poll. If the substring is missing, the call fails with an error envelope. This catches pages that return 200 without the content you need. `unblocker` defaults to `true` and handles supported anti-bot or captcha challenges along the way. Set it to `false` to return the page exactly as it loads, challenge included.
 
 `structuredContent` shape is intentionally different from single/proxy: `{status, headers (object, not array), body (not data), cookies (full browser cookie shape), userAgent}`.
 
@@ -163,22 +184,22 @@ Six workflow templates surfaced under `/prompts` in your MCP client. They orches
 
 | Prompt | Arguments | What it does |
 |---|---|---|
-| `smart_fetch` | `url, must_contain?, extract?` | Auto fetch (picks the method, handles bot protection) → return or extract content |
-| `scrape_product_page` | `url` | Browser fetch → extract title, price, image, stock, SKU as JSON |
-| `extract_article` | `url` | Single → fallback to proxy → strip nav/ads → return clean article JSON |
-| `monitor_pricing` | `url, target_price?` | Proxy fetch → extract price → compare to target |
-| `check_endpoint_health` | `url, expected_text?` | Single with strict validation → reachable/status/timing report |
-| `bulk_fetch_urls` | `urls` (comma-separated) | Parallel single → auto-fallback to proxy per URL → metadata only |
+| `smart_fetch` | `url, must_contain?, extract?` | Pick the method, handle bot protection, and return or extract content |
+| `scrape_product_page` | `url` | Extract title, price, image, stock, and SKU as JSON in a browser session |
+| `extract_article` | `url` | Fetch an article, retry through a proxy if needed, and remove page chrome |
+| `monitor_pricing` | `url, target_price?` | Fetch the current price and compare it with a target |
+| `check_endpoint_health` | `url, expected_text?` | Validate reachability, status, content, and timing |
+| `bulk_fetch_urls` | `urls` (comma-separated) | Fetch URLs in parallel, retry blocked ones, and return metadata |
 
-Each prompt arrives as a templated user message your LLM executes with the right tools. They cost zero tokens at idle - only invoked prompts enter the context window.
+Each prompt arrives as a templated user message your LLM executes with the right tools. The full prompt text enters the context only when you invoke it.
 
 Full recipe text + manual fallback prompts: [foura.ai/docs/mcp/recipes](https://foura.ai/docs/mcp/recipes). For the full error code list, see [foura.ai/docs/mcp/errors](https://foura.ai/docs/mcp/errors).
 
 ## Authentication
 
-Your `Bearer` token (or the `FOURA_API_KEY` env var in stdio mode) forwards to the FourA API as `X-API-Key`. One key, all four tools.
+Use `FOURA_API_KEY` in stdio mode or an `Authorization: Bearer pk_live_...` header with the hosted endpoint. One key authenticates all four tools.
 
-Keys are managed in the [dashboard](https://foura.ai/dashboard/#api-keys) - shown once on creation, rotate or deactivate any time. See [foura.ai/docs/getting-started/authentication](https://foura.ai/docs/getting-started/authentication) for the full key-management walkthrough.
+Keys are managed in the [dashboard](https://foura.ai/dashboard/#api-keys), where you can create, reveal, rotate, or deactivate them. See [foura.ai/docs/getting-started/authentication](https://foura.ai/docs/getting-started/authentication) for the full key-management walkthrough.
 
 ## Error envelope - typed contract for agent retries
 
@@ -186,7 +207,7 @@ Every error (`isError: true`) carries a `structuredContent` envelope with at min
 
 ```jsonc
 {
-  "service": "single" | "proxy" | "browser",
+  "service": "auto" | "single" | "proxy" | "browser",
   "code": "ssrf_blocked" | "auth_failed" | "rate_limited" | ...,
   "error": "Human-readable message"
 }
@@ -196,7 +217,7 @@ Where the upstream returned a status, you also get `status` (HTTP code) and on r
 
 | `code` | When | Retry safe? |
 |---|---|---|
-| `ssrf_blocked` | Target IP in a private / reserved range (RFC 5735+6598+IPv6 reserved) | No - change the URL |
+| `ssrf_blocked` | Target resolves to a private or reserved address | No - change the URL |
 | `upstream_non_json` | Upstream returned malformed body | Maybe - investigate |
 | `bad_request` (400) | Input shape rejected by FourA | No - fix arguments |
 | `auth_failed` (401) | Key missing, invalid, or deactivated | No - fix the key |
@@ -206,41 +227,40 @@ Where the upstream returned a status, you also get `status` (HTTP code) and on r
 | `at_capacity` (503) | Concurrency cap hit | Yes - wait `retryAfter` |
 | `service_disabled` (503) | Maintenance window | Yes - wait `retryAfter` |
 | `service_unavailable` (503) | Generic 503 | Yes - short backoff |
-| `upstream_error` (≥500) | Upstream 5xx | Yes - exponential backoff |
+| `upstream_error` (`>=500`) | Upstream 5xx | Yes - exponential backoff |
 | `upstream_client_error` (4xx) | Other 4xx | Usually no |
+| `no_eligible_proxy` | No proxy matches the requested `exitCountries` | No - change the country scope |
 
 LLM agents can read `code` directly for retry logic without parsing prose. Spec reference: [foura.ai/docs/api/errors](https://foura.ai/docs/api/errors).
 
-## Combining the tools - sticky exit IPs
+## Combining the tools - reuse the same exit
 
-The lower-level tools compose. `foura_proxy` returns the base36 ID of the exit it used. Pass that ID back into `foura_single.proxy` or `foura_browser.proxy` and the next call exits through the **same IP** - same session, same fingerprint, same geo.
+The lower-level tools compose. `foura_proxy` returns the base36 ID of the exit it used. Pass that ID into `foura_single.proxy` or `foura_browser.proxy` to reuse the same exit for the next request.
 
 ```jsonc
-// 1. Find a working exit for the target - use maxTries:25-30 for tier-1 WAFs
+// 1. Find a working exit. Difficult protected targets may need maxTries:25-30.
 const r = await foura_proxy({
   maxTries: 30,
   request: { method: "GET", url: "https://probe.example.com", unblocker: true }
 });
-// → { status: 200, proxy: "4DZ3VE", ... }
+// Returns { status: 200, proxy: "4DZ3VE", ... }
 
-// 2. Reuse it for follow-up HTTP (cookies, multi-step flows)
+// 2. Reuse it for follow-up HTTP
 await foura_single({ method: "GET", url: "https://target/api", proxy: r.proxy });
 
-// 3. Or render JS through the same egress - exits through the IP that already
-//    cleared the challenge for this target, so the snapshot captures the real
-//    post-challenge content instead of a challenge page.
+// 3. Or render JavaScript through the same exit.
 await foura_browser({ url: "https://target/spa", proxy: r.proxy });
 ```
 
-This chain is the canonical pattern for **tier-1 WAF + JavaScript-rendered targets** (Vercel Security Checkpoint, Cloudflare 'Just a moment', Akamai Bot Manager protecting SPAs). Calling `foura_browser` directly against a WAF target usually captures the challenge page - the snapshot fires before the challenge's deferred reload completes. Solve via `foura_proxy` first, then chain.
+For a protected JavaScript page, find a working route with `foura_proxy` before calling `foura_browser`. Starting in the browser can return the challenge page before the real content loads.
 
-To rotate AWAY from a known-bad proxy on the next `foura_proxy` call, pass it as `ignoreProxies: ["4DZ3VE"]`. The `proxy` field on `foura_single` and `foura_browser` also accepts raw URLs (`http://host:port`, `socks5://...`) if you have your own list.
+To choose a different proxy on the next `foura_proxy` call, pass the previous ID as `ignoreProxies: ["4DZ3VE"]`. The `proxy` field on `foura_single` and `foura_browser` also accepts raw URLs (`http://host:port`, `socks5://...`) if you have your own list.
 
 ## Large responses - `offload_large` (default: inline)
 
 By default (since v0.2.0), full response bodies are returned inline in `structuredContent` regardless of size. This works in every MCP client.
 
-If your client supports MCP `resources/read` (and you want to save tokens on big pages), pass `offload_large: true` per tool call. Responses ≥ 50 KB are then written to disk, returned as a `resource_link`, and your client fetches the body only when it actually needs it. Cached payloads expire after 1 hour.
+If your client supports MCP `resources/read` (and you want to save tokens on big pages), pass `offload_large: true` per tool call. Responses of 50 KB or more are returned as a `resource_link`, and your client fetches the body only when it needs it. The resource remains available for one hour.
 
 ```jsonc
 {
@@ -250,24 +270,20 @@ If your client supports MCP `resources/read` (and you want to save tokens on big
 }
 ```
 
-| Client | `offload_large: true` |
-|---|---|
-| Claude Desktop | not yet - leave default `false` |
-| Claude Code, Cursor, Windsurf | supported |
-| VS Code MCP extension | supported |
+Support for MCP resource links varies by client. Leave `offload_large` at its default `false` if your client can't read `resource_link` blocks.
 
-Tenant-isolated: only the API key that stored a payload can read it back.
+Only the API key that created an offloaded resource can read it back.
 
-## Other limits
+## Limits and responsible use
 
-- **Private targets are refused.** Requests to private or reserved IP ranges (RFC 5735, 6598, IPv6 reserved blocks) are blocked at the MCP layer. Only public-internet hosts are forwarded.
+- **Private targets are refused.** Requests to private or reserved addresses are blocked at the MCP layer. Only public-internet hosts are forwarded.
 - **Rate limits** are enforced by the FourA API per service. Concurrency + RPM. Details at [foura.ai/docs/api/rate-limits](https://foura.ai/docs/api/rate-limits).
-- **Body size cap** of 256 KB on incoming `/mcp` requests (real MCP payloads are < 4 KB).
-- **DNS-rebinding defense:** the hosted server validates `Origin` and `Host` headers. Browser-based callers must originate from an allowlisted origin. Server-to-server callers (curl, MCP clients in stdio bridge mode) are unaffected.
 
-## Self-Hosting
+Use FourA only for public content you are authorized to access and in accordance with the target site's terms and applicable law.
 
-The MCP server runs in one container, statelessly - each request brings its own key, so there's no session state, no sticky load balancing, nothing to coordinate. Scale horizontally behind any load balancer.
+## Run it yourself
+
+Run the stdio server directly from npm with `npx -y @fouradata/mcp`, or build the included [`Dockerfile`](./Dockerfile) for the Streamable HTTP transport.
 
 Configurable environment:
 
@@ -275,9 +291,9 @@ Configurable environment:
 |---|---|---|
 | `PORT` | `3076` | HTTP listen port |
 | `FOURA_API_BASE` | `https://api.foura.ai/api` | Upstream FourA REST base URL |
-| `FOURA_MCP_PAYLOADS_DIR` | `/data/payloads` | Where ≥50 KB responses are cached on disk |
+| `FOURA_MCP_PAYLOADS_DIR` | `/data/payloads` | Where responses of 50 KB or more are cached on disk |
 
-The full source is public here under MIT - build the container from the included [`Dockerfile`](./Dockerfile) (`docker build -t foura-mcp .`), or run it straight from npm with `npx -y @fouradata/mcp`. See [DEVELOPMENT.md](./DEVELOPMENT.md) for the local build and test workflow.
+See [DEVELOPMENT.md](./DEVELOPMENT.md) for the local build and test workflow.
 
 ## License
 

@@ -1,4 +1,4 @@
-// Real-site sanity — including a real-world.
+// Real-site sanity coverage.
 import { test, before, after, describe } from "node:test";
 import assert from "node:assert/strict";
 import { startServer } from "./_common.mjs";
@@ -11,7 +11,7 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-describe("Real sites — covers a real-world
+describe("real-site regression targets", () => {
   test("1. example.com via foura_single", async () => {
     const r = await client.callTool("foura_single", { method: "GET", url: TEST_SITES.static }, TWO_MIN);
     assertSuccess(r);
@@ -27,7 +27,7 @@ describe("Real sites — covers a real-world
     assert.ok(body.toLowerCase().includes("ycombinator") || body.toLowerCase().includes("hacker news"));
   });
 
-  test("3. Wikipedia (~150KB) — default inline (regression default behavior)", async () => {
+  test("3. Wikipedia (~150KB) - default inline (regression default behavior)", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.wikipedia, followRedirects: 5, unblocker: true,
     }, TWO_MIN);
@@ -36,12 +36,12 @@ describe("Real sites — covers a real-world
     assert.equal(r.structuredContent.offloaded_resource_uri, undefined);
   });
 
-  test("4. techmart.bg product page (a real-world
+  test("4. techmart.bg product page via foura_browser", async () => {
     const r = await client.callTool("foura_browser", {
       url: TEST_SITES.techmart_phone, timeout_ms: 60_000,
     }, TWO_MIN);
     if (r.isError) {
-      // Anti-bot or transient failure — surface as structured envelope, never bare error.
+      // Anti-bot or transient failure - surface as structured envelope, never bare error.
       assert.equal(r.structuredContent?.service, "browser");
       return;
     }
@@ -67,7 +67,7 @@ describe("Real sites — covers a real-world
       method: "GET", url: "https://github.com", followRedirects: 5, unblocker: true,
     }, TWO_MIN);
     if (r.isError) {
-      // GitHub can rate-limit unauthed requests — accept envelope.
+      // GitHub can rate-limit unauthed requests - accept envelope.
       assert.equal(r.structuredContent?.service, "single");
       return;
     }

@@ -6,9 +6,11 @@ import path from "node:path";
 
 const REPO = path.resolve(fileURLToPath(import.meta.url), "../../..");
 const pkg = JSON.parse(readFileSync(path.join(REPO, "package.json"), "utf8"));
+const lock = JSON.parse(readFileSync(path.join(REPO, "package-lock.json"), "utf8"));
+const serverManifest = JSON.parse(readFileSync(path.join(REPO, "server.json"), "utf8"));
 const VERSION = pkg.version;
 
-describe("version anchors — all 6 in sync with package.json", () => {
+describe("version anchors - all release surfaces agree with package.json", () => {
   test(`1. package.json version is semver (${VERSION})`, () => {
     assert.match(VERSION, /^\d+\.\d+\.\d+(-[\w.]+)?$/);
   });
@@ -38,14 +40,29 @@ describe("version anchors — all 6 in sync with package.json", () => {
     assert.ok(src.includes(`foura-mcp/${VERSION} (browser)`));
   });
 
-  test("7. CHANGELOG.md latest entry header references current or [Unreleased]", () => {
+  test("7. src/tools/auto.ts User-Agent matches", () => {
+    const src = readFileSync(path.join(REPO, "src/tools/auto.ts"), "utf8");
+    assert.ok(src.includes(`foura-mcp/${VERSION} (auto)`));
+  });
+
+  test("8. package-lock.json root versions match", () => {
+    assert.equal(lock.version, VERSION);
+    assert.equal(lock.packages?.[""]?.version, VERSION);
+  });
+
+  test("9. server.json registry versions match", () => {
+    assert.equal(serverManifest.version, VERSION);
+    assert.equal(serverManifest.packages?.[0]?.version, VERSION);
+  });
+
+  test("10. CHANGELOG.md latest entry header references current or [Unreleased]", () => {
     const cl = readFileSync(path.join(REPO, "CHANGELOG.md"), "utf8");
     const hasUnreleased = cl.includes("## [Unreleased]");
     const hasVersion = cl.includes(`## [${VERSION}]`);
     assert.ok(hasUnreleased || hasVersion, `CHANGELOG must have ## [Unreleased] or ## [${VERSION}]`);
   });
 
-  test("8. no stale pre-current version literals in src/", () => {
+  test("11. no stale pre-current version literals in src/", () => {
     // Catches sed-by-hand drift the bump script is designed to prevent.
     const files = [
       "src/http.ts",
@@ -53,6 +70,7 @@ describe("version anchors — all 6 in sync with package.json", () => {
       "src/tools/single.ts",
       "src/tools/proxy.ts",
       "src/tools/browser.ts",
+      "src/tools/auto.ts",
     ];
     for (const f of files) {
       const src = readFileSync(path.join(REPO, f), "utf8");

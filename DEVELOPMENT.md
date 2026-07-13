@@ -2,20 +2,20 @@
 
 ## Requirements
 
-- Node >= 20 (Node 24 recommended)
+- Node >= 22.11 (Node 24 recommended)
 
 ## Setup
 
 ```bash
 git clone https://github.com/fouradata/mcp
 cd mcp
-npm install
+npm ci
 ```
 
 ## Run
 
 - **stdio** (what MCP clients spawn): `npm run dev` - needs `FOURA_API_KEY` in the environment.
-- **hosted HTTP transport**: `npm run dev:http`, then POST MCP traffic to
+- **Streamable HTTP transport**: `npm run dev:http`, then POST MCP traffic to
   `http://localhost:3076/mcp`.
 - **MCP Inspector**: `npm run inspector` - opens the interactive tool explorer.
 
@@ -25,28 +25,29 @@ npm install
 
 ## Test
 
-- `npm run lint` - typecheck only (`tsc --noEmit`).
-- `npm test` - build + unit + stdio integration + docs compliance.
-- `npm run test:integration:http` - HTTP transport suite.
+- `npm run test:ci` - the deterministic release gate: lint, build, unit tests, mocked MCP
+  integration, docs checks, syntax checks, token budget, and package audit.
+- `npm test` - build + unit + live stdio integration + docs compliance.
+- `npm run test:integration:http` - live HTTP transport suite.
 
-Integration tests spawn the server and call the live FourA API, so they need a real
-`FOURA_API_KEY` in the environment. Unit and docs-compliance tests do not.
+The live integration suites spawn the server and call the FourA API, so they need a real
+`FOURA_API_KEY` in the environment. `npm run test:ci` needs no production credential.
 
 ## Release
 
-Edit `CHANGELOG.md`, then `npm run bump <patch|minor|major>` (updates every version anchor at
-once), commit, and push the `vX.Y.Z` tag. GitHub Actions publishes to npm with build provenance.
-See [RELEASING.md](./RELEASING.md).
+Releases go through a protected pull request, required CI, squash merge, and exact-tag preflight.
+GitHub Actions publishes the verified tag to npm with provenance. Maintainers should follow
+[RELEASING.md](./RELEASING.md).
 
 ## Environment
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `FOURA_API_KEY` | (required) | Your FourA API key, forwarded upstream as `X-API-Key`. |
-| `PORT` | `3076` | HTTP listen port (hosted transport). |
+| `FOURA_API_KEY` | (required) | Your FourA API key for tool calls. |
+| `PORT` | `3076` | HTTP listen port (Streamable HTTP transport). |
 | `FOURA_API_BASE` | `https://api.foura.ai/api` | Upstream FourA REST base URL. |
 | `FOURA_MCP_PAYLOADS_DIR` | `/data/payloads` | Where responses >= 50 KB are cached on disk. |
 
 ---
 
-FourA web scraping API: https://foura.ai  ·  MCP server page: https://foura.ai/mcp  ·  Docs: https://foura.ai/docs/mcp/server
+FourA: https://foura.ai | MCP server: https://foura.ai/mcp | Docs: https://foura.ai/docs/mcp/server

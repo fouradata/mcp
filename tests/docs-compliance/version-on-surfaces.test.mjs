@@ -8,6 +8,7 @@ import { request } from "undici";
 const REPO = path.resolve(fileURLToPath(import.meta.url), "../../..");
 const pkg = JSON.parse(readFileSync(path.join(REPO, "package.json"), "utf8"));
 const VERSION = pkg.version;
+const RUN_LIVE_CHECKS = process.env.RUN_LIVE_VERSION_CHECKS === "1";
 
 describe("Version on all surfaces (package.json is truth)", () => {
   test("1. package.json semver", () => {
@@ -21,23 +22,23 @@ describe("Version on all surfaces (package.json is truth)", () => {
     assert.ok(hasV || hasUnreleased, `CHANGELOG must have ## [${VERSION}] or ## [Unreleased]`);
   });
 
-  test("3. /healthz on deployed mcp.foura.ai (may lag pre-release; network-optional)", async () => {
+  test("3. /healthz on deployed mcp.foura.ai (explicit live check)", { skip: !RUN_LIVE_CHECKS }, async () => {
     const url = (process.env.FOURA_MCP_HTTP_URL ?? "https://mcp.foura.ai/mcp").replace(/\/mcp$/, "/healthz");
     try {
       const res = await request(url, { signal: AbortSignal.timeout(8000) });
       const body = await res.body.json();
       assert.match(body.version, /^\d+\.\d+\.\d+/);
       if (body.version !== VERSION) {
-        console.warn(`  ⚠ deployed ${body.version} != local ${VERSION} (expected pre-deploy)`);
+        console.warn(`  WARNING: deployed ${body.version} != local ${VERSION} (expected pre-deploy)`);
       }
     } catch (e) {
       // CI containers and sandboxes often can't reach the public hostname.
-      // The deployed-version check is soft — log and continue.
-      console.warn(`  ⚠ mcp.foura.ai unreachable from this environment: ${e.message?.slice(0, 100)}`);
+      // The deployed-version check is soft - log and continue.
+      console.warn(`  WARNING: mcp.foura.ai unreachable from this environment: ${e.message?.slice(0, 100)}`);
     }
   });
 
-  test("4. npm latest tag (may lag pre-publish)", async () => {
+  test("4. npm latest tag (explicit live check)", { skip: !RUN_LIVE_CHECKS }, async () => {
     try {
       const res = await request("https://registry.npmjs.org/@fouradata/mcp/latest", {
         signal: AbortSignal.timeout(8000),
@@ -45,10 +46,10 @@ describe("Version on all surfaces (package.json is truth)", () => {
       const body = await res.body.json();
       assert.match(body.version, /^\d+\.\d+\.\d+/);
       if (body.version !== VERSION) {
-        console.warn(`  ⚠ npm latest ${body.version} != local ${VERSION} (expected pre-publish)`);
+        console.warn(`  WARNING: npm latest ${body.version} != local ${VERSION} (expected pre-publish)`);
       }
     } catch (e) {
-      console.warn(`  ⚠ npm registry unreachable: ${e.message}`);
+      console.warn(`  WARNING: npm registry unreachable: ${e.message}`);
     }
   });
 });

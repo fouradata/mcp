@@ -10,8 +10,8 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-describe("foura_proxy — functional paths", () => {
-  test("1. GET httpbin/ip → 200, proxy field, total float", async () => {
+describe("foura_proxy - functional paths", () => {
+  test("1. GET httpbin/ip -> 200, proxy field, total float", async () => {
     const r = await client.callTool("foura_proxy", {
       maxTries: 3,
       request: { method: "GET", url: TEST_SITES.ip, unblocker: true },
@@ -59,15 +59,15 @@ describe("foura_proxy — functional paths", () => {
         timeout_ms: 15000,
       },
     }, TWO_MIN);
-    // Proxy pool nondeterminism — accept either success or all-fail envelope.
+    // Proxy pool nondeterminism - accept either success or all-fail envelope.
     if (r.isError) {
       assertEnvelope(r, "proxy");
       return;
     }
     assertSuccess(r);
     const ua = r.structuredContent.data?.headers?.["User-Agent"] ?? "";
-    // The internal foura-mcp UA must NEVER leak to the target.
-    assert.ok(!ua.toLowerCase().includes("foura-mcp"), `proxy leaked internal UA: ${ua}`);
+    // The server's own user agent must never leak to the target.
+    assert.ok(!ua.toLowerCase().includes("foura-mcp"), `proxy leaked server UA: ${ua}`);
   });
 
   test("4. ignoreProxies accepts string array", async () => {
@@ -76,19 +76,19 @@ describe("foura_proxy — functional paths", () => {
       ignoreProxies: ["BOGUS_NONEXISTING_ID"],
       request: { method: "GET", url: TEST_SITES.ip, unblocker: true },
     }, TWO_MIN);
-    // Should still succeed — bogus ID is just decoded and added to internal set.
+    // An unknown ID is ignored safely.
     if (r.isError) assertEnvelope(r, "proxy");
     else assertSuccess(r);
   });
 
-  test("5. regression regression — all-proxies-fail surfaces as structured error", async () => {
+  test("5. all-proxies-fail surfaces as a structured error", async () => {
     // Force a high-failure scenario: very low timeout against slow endpoint.
     const r = await client.callTool("foura_proxy", {
       maxTries: 1,
       timeout_ms: 500,
       request: { method: "GET", url: TEST_SITES.delay(5), timeout_ms: 200, unblocker: true },
     }, TWO_MIN);
-    // Whatever the failure mode, MUST be flagged as isError with envelope.
+    // Every failure mode must set isError and return an envelope.
     if (!r.isError) {
       // If it somehow succeeded, that's also OK
       assertSuccess(r);
@@ -97,7 +97,7 @@ describe("foura_proxy — functional paths", () => {
     }
   });
 
-  test("6. maxTries=0 → schema rejects at input layer", async () => {
+  test("6. maxTries=0 -> schema rejects at input layer", async () => {
     const r = await client.callTool("foura_proxy", {
       maxTries: 0,
       request: { method: "GET", url: TEST_SITES.static },
@@ -105,7 +105,7 @@ describe("foura_proxy — functional paths", () => {
     assert.equal(r.isError, true);
   });
 
-  test("7. missing inner request → input validation fails", async () => {
+  test("7. missing inner request -> input validation fails", async () => {
     const r = await client.callTool("foura_proxy", { maxTries: 3 }, TWO_MIN);
     assert.equal(r.isError, true);
   });

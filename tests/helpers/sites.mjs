@@ -1,12 +1,12 @@
-// Real-site catalog — single source of truth for every test URL.
-// When a site's shape changes or a domain rotates, edit ONLY this file.
+// Real-site catalog - single source of truth for every test URL.
+// When a site's shape changes or a domain rotates, edit this file.
 
 export const TEST_SITES = {
-  // Sanity baselines — stable, free
+  // Sanity baselines - stable, free
   static: "https://example.com",
   static_org: "https://example.org",
 
-  // httpbin — http-behavior coverage (stable + free)
+  // httpbin - http-behavior coverage (stable + free)
   json: "https://httpbin.org/json",
   cookies_set: "https://httpbin.org/cookies/set?a=1&b=2",          // regression source
   cookies_set_single: "https://httpbin.org/cookies/set?solo=only",
@@ -31,10 +31,10 @@ export const TEST_SITES = {
   wikipedia: "https://en.wikipedia.org/wiki/Web_scraping",
   hackernews: "https://news.ycombinator.com/",
 
-  // Anti-bot territory — loose checks, may change
+  // Anti-bot territory - loose checks, may change
   google_search: "https://www.google.com/search?q=mcp+server",
 
-  // SSRF targets — must always block
+  // SSRF targets - must always block
   ssrf: {
     loopback: "http://127.0.0.1",
     loopback_high: "http://127.0.0.255",

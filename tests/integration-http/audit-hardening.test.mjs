@@ -1,4 +1,4 @@
-// Audit hardening regressions — Origin/Host validation, WWW-Authenticate,
+// Audit hardening regressions - Origin/Host validation, WWW-Authenticate,
 // MCP-Protocol-Version, body size cap, request timeout, graceful shutdown.
 // All run against a LOCAL `node dist/http.js` so they're independent of the
 // deployed mcp.foura.ai.
@@ -32,8 +32,8 @@ function initBody() {
 const CT = "application/json";
 const ACCEPT = "application/json, text/event-stream";
 
-describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
-  test("1. valid Host (127.0.0.1) + no Origin (server-to-server) → accepted", async () => {
+describe("Origin and Host validation", () => {
+  test("1. valid Host (127.0.0.1) + no Origin (server-to-server) -> accepted", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -47,7 +47,7 @@ describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
     assert.notEqual(res.statusCode, 403, `unexpected 403: ${res.statusCode}`);
   });
 
-  test("2. allowed Origin (https://test.local) → accepted", async () => {
+  test("2. allowed Origin (https://test.local) -> accepted", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -62,7 +62,7 @@ describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
     assert.notEqual(res.statusCode, 403);
   });
 
-  test("3. attacker Origin (https://evil.com) → 403", async () => {
+  test("3. disallowed Origin returns 403", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -78,7 +78,7 @@ describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
     assert.match(body.error.message, /Origin .* not in the allowlist/);
   });
 
-  test("4. attacker Host header (169.254.169.254 — AWS metadata) → 403", async () => {
+  test("4. disallowed Host header returns 403", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -94,14 +94,14 @@ describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
     assert.match(body.error.message, /Host .* not in the allowlist/);
   });
 
-  test("5. unrelated Host (random domain) → 403", async () => {
+  test("5. unrelated Host (random domain) -> 403", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
         "Content-Type": CT,
         Accept: ACCEPT,
         Authorization: `Bearer ${TEST_KEY}`,
-        Host: "attacker.example.com",
+        Host: "untrusted.example.com",
       },
       body: initBody(),
     });
@@ -118,8 +118,8 @@ describe("Audit 1.1 — Origin + Host validation (CVE-2025-66414)", () => {
   });
 });
 
-describe("Audit 1.2 — WWW-Authenticate on 401", () => {
-  test("1. missing Bearer → 401 + WWW-Authenticate header", async () => {
+describe("WWW-Authenticate on 401", () => {
+  test("1. missing Bearer -> 401 + WWW-Authenticate header", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: { "Content-Type": CT, Accept: ACCEPT },
@@ -134,13 +134,13 @@ describe("Audit 1.2 — WWW-Authenticate on 401", () => {
   });
 });
 
-describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)", () => {
+describe("MCP-Protocol-Version validation", () => {
   // CLASS-LEVEL REGRESSION: every version the bundled SDK supports must
   // pass our middleware. If a future SDK adds a new version, this test
   // auto-extends. If we ever shadow the SDK's list with a stale hardcoded
   // copy, this test breaks immediately.
   for (const version of SUPPORTED_PROTOCOL_VERSIONS) {
-    test(`SDK version ${version} → accepted`, async () => {
+    test(`SDK version ${version} -> accepted`, async () => {
       const res = await request(`${server.url}/mcp`, {
         method: "POST",
         headers: {
@@ -156,7 +156,7 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
     });
   }
 
-  // KNOWN REAL-WORLD CLIENT VERSIONS — explicit list of MCP clients we know
+  // Known client versions used for compatibility coverage.
   // about in the wild + the protocol version each one sends in the
   // MCP-Protocol-Version header. Update when a new client lands so we have
   // an explicit reminder of what to test.
@@ -169,7 +169,7 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
     { client: "Legacy MCP client pre-2025", version: "2024-11-05" },
   ];
   for (const { client, version } of REAL_CLIENT_VERSIONS) {
-    test(`real-world ${client} (${version}) → accepted`, async () => {
+    test(`real-world ${client} (${version}) -> accepted`, async () => {
       const res = await request(`${server.url}/mcp`, {
         method: "POST",
         headers: {
@@ -181,12 +181,12 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
       });
       res.body.dump?.();
       assert.notEqual(res.statusCode, 400,
-        `Real-world client ${client} sends ${version} — must NOT be rejected. ` +
+        `Known client ${client} sends ${version} and must not be rejected. ` +
         `If this fails, the SDK pin is too old and is breaking production users.`);
     });
   }
 
-  test("unknown future date 9999-12-31 → 400 with informative error", async () => {
+  test("unknown future date 9999-12-31 -> 400 with informative error", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -206,7 +206,7 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
     }
   });
 
-  test("malformed string → 400", async () => {
+  test("malformed string -> 400", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -220,7 +220,7 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
     assert.equal(res.statusCode, 400);
   });
 
-  test("missing header → accepted (backwards-compat per spec)", async () => {
+  test("missing header -> accepted (backwards-compat per spec)", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: {
@@ -234,8 +234,8 @@ describe("Audit 1.3 — MCP-Protocol-Version validation (SDK-driven allowlist)",
   });
 });
 
-describe("Audit 1.7 — body size cap (256 KB)", () => {
-  test("1. 200 KB body → accepted by transport", async () => {
+describe("request body size cap", () => {
+  test("1. 200 KB body -> accepted by transport", async () => {
     const big = JSON.stringify({
       jsonrpc: "2.0", id: 1, method: "initialize",
       params: {
@@ -256,7 +256,7 @@ describe("Audit 1.7 — body size cap (256 KB)", () => {
     assert.notEqual(res.statusCode, 413, "200KB should pass the 256KB limit");
   });
 
-  test("2. 300 KB body → 413 Payload Too Large", async () => {
+  test("2. 300 KB body -> 413 Payload Too Large", async () => {
     const huge = JSON.stringify({
       jsonrpc: "2.0", id: 1, method: "initialize",
       params: {
@@ -278,7 +278,7 @@ describe("Audit 1.7 — body size cap (256 KB)", () => {
   });
 });
 
-describe("Audit 3.1 — graceful shutdown", () => {
+describe("graceful shutdown", () => {
   test("1. SIGTERM lets the server close cleanly", async () => {
     // Start a separate instance, send SIGTERM, assert exit 0.
     const tmp = await startLocalServer();

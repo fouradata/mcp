@@ -41,17 +41,11 @@ function deriveCode(status: number, envelope: Record<string, unknown>): string {
   return "upstream_unknown";
 }
 
-// /api/auto is registered on the gateway WITHOUT a trailing slash (the route is
-// an exact `POST /api/auto`), unlike /single/ /proxy/ /browser/ which keep the
-// slash. Hitting `/auto/` would miss the dedicated handler and fall through to
-// the transparent table - so this URL must stay slash-less.
+// This API route is exact and must not have a trailing slash.
 const AUTO_API_URL =
   (process.env.FOURA_API_BASE ?? "https://api.foura.ai/api") + "/auto";
 
-// The client's success criteria, passed verbatim to auto's internal sub-calls.
-// Same DwValidate shape as foura_single / foura_proxy - auto enforces it on
-// every rung itself, so a rung that only superficially "succeeds" (e.g. a
-// challenge interstitial) is rejected and the ladder keeps climbing.
+// Apply the client's success criteria to every fetch attempt.
 const AutoValidateSchema = z
   .object({
     status: z
@@ -66,18 +60,18 @@ const AutoValidateSchema = z
         accept: z
           .record(z.string(), z.string())
           .optional()
-          .describe("Map of header-name-substring → header-value-substring (case-insensitive). PASSES if at least one entry matches a response header."),
+          .describe("Case-insensitive header substring rules. The response passes when at least one name/value pair matches."),
         fail: z
           .record(z.string(), z.string())
           .optional()
-          .describe("Map of header-name-substring → header-value-substring (case-insensitive). FAILS if any entry matches a response header (use to reject challenge / block headers)."),
+          .describe("Case-insensitive header substring rules that reject the response when any name/value pair matches."),
       })
       .optional()
       .describe("Header validation: pass when an accepted header matches, fail when a blocklisted header matches."),
     data: z
       .object({
-        accept: z.array(z.string()).optional().describe("Substrings the final body MUST contain for the fetch to count as solved (CASE-SENSITIVE). Strongly recommended on protected targets so auto can tell a real page from a challenge page."),
-        fail: z.array(z.string()).optional().describe("Substrings the final body must NOT contain"),
+        accept: z.array(z.string()).optional().describe("Case-sensitive substrings the final body must contain. Use this on protected targets to distinguish the real page from a challenge page."),
+        fail: z.array(z.string()).optional().describe("Substrings the final body must not contain"),
       })
       .optional()
       .describe("Body validation: pass when the body contains an expected substring (accept), fail when it contains a blocked one (fail)."),
@@ -87,7 +81,7 @@ const AutoValidateSchema = z
 
 // Response headers come back as an array of per-hop objects (same shape the
 // other tools surface). `result` carries the status line; every other key is a
-// response header name → value (string, or array of strings for multi-value
+// response header name -> value (string, or array of strings for multi-value
 // headers like Set-Cookie / Link).
 const ResponseHeadersSchema = z
   .object({
@@ -101,20 +95,17 @@ const ResponseHeadersSchema = z
   })
   .catchall(z.union([z.string(), z.array(z.string())]));
 
-// The trace auto always returns: which rung delivered, whether a defense was
-// solved, how many sub-call attempts it took, and the summed credits.
+// Completion details returned with every auto response.
 const AutoMetaSchema = z
   .object({
-    rung: z.string().optional().describe("Which rung delivered the content (e.g. probe / proxy / browser / cache). `cache` means a warm session was replayed cheaply."),
+    rung: z.string().optional().describe("Which method delivered the content (e.g. probe / proxy / browser / cache). `cache` means a reusable session was used."),
     solved: z.boolean().optional().describe("True when a bot-defense was actively solved on the way to the content (vs. the target being open)."),
-    attempts: z.number().optional().describe("Total internal sub-call attempts across the whole ladder."),
-    credits: z.number().optional().describe("Total credits spent (sum of every internal sub-call). A cold solve is expensive; a subsequent warm replay amortizes to the cheap-fetch cost."),
+    attempts: z.number().optional().describe("Total fetch attempts made for this request."),
+    credits: z.number().optional().describe("Total credits spent across all attempts."),
   })
   .catchall(z.unknown());
 
-// The {proxy, cookies, userAgent} session triple. proxy is the OPAQUE base36
-// proxy id (never a raw IP). Returned by default so a power client can DIY-replay
-// the same session through foura_single / foura_proxy later.
+// Reusable session values for clients that need a follow-up request.
 const AutoSessionSchema = z
   .object({
     proxy: z.string().optional().describe("Opaque base36 exit id of the session (e.g. `4DZ3VE`) - pass to foura_single.proxy / foura_proxy.proxy to replay through the same exit. Never a raw IP."),
@@ -130,25 +121,25 @@ const autoOutputShape = {
     .number()
     .int()
     .optional()
-    .describe("HTTP status code from the target on the rung that delivered the content. `0` indicates the whole ladder failed before any HTTP response - check `error`."),
+    .describe("HTTP status code from the request that delivered the content. `0` means no HTTP response was received; check `error`."),
   headers: z
     .union([z.array(ResponseHeadersSchema), z.string(), z.record(z.string(), z.unknown())])
     .optional()
-    .describe("Response headers from the delivering rung, as an array of objects. Each entry has `result.{version, code, reason}` plus arbitrary header-name keys whose values are strings (or arrays of strings for multi-value headers like Set-Cookie / Link). Last array entry is the final response."),
+    .describe("Response headers from the successful request, as an array of objects. Each entry has `result.{version, code, reason}` plus header-name keys. The last entry is the final response."),
   data: z
     .unknown()
     .optional()
     .describe("Decoded response body of the delivered page. String by default; object when the body parsed as JSON. Omitted when offloaded."),
-  meta: AutoMetaSchema.optional().describe("Trace of what the ladder did: rung, solved, attempts, credits. Always present."),
-  session: AutoSessionSchema.optional().describe("The {proxy, cookies, userAgent} triple of the winning session, for DIY replay through foura_single / foura_proxy. Present by default (send returnSession:false to omit)."),
-  // Offload path - MCP layer adds these when body >= 50KB AND offload_large=true
-  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>"),
+  meta: AutoMetaSchema.optional().describe("Completion details: rung, solved, attempts, and credits. Always present."),
+  session: AutoSessionSchema.optional().describe("Reusable {proxy, cookies, userAgent} values for follow-up calls. Present by default; send returnSession:false to omit."),
+  // Resource-link fields used when the response body is offloaded.
+  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
   size_bytes: z.number().int().optional().describe("Total offloaded body size in bytes"),
   // Error path - auto failure surfaces the failure status + message + attempts.
-  error: z.string().optional().describe("Human-readable error message when the ladder could not deliver the content within the budget."),
-  attempts: z.number().optional().describe("Total sub-call attempts when the ladder failed (also present inside `meta`)."),
+  error: z.string().optional().describe("Human-readable error message when the request could not deliver content within the budget."),
+  attempts: z.number().optional().describe("Total attempts when the request failed (also present inside `meta`)."),
   service: z.enum(["single", "proxy", "browser", "api", "auto"]).optional(),
-  retryAfter: z.number().optional().describe("Seconds to wait before retrying (429/503 from the gateway)"),
+  retryAfter: z.number().optional().describe("Seconds to wait before retrying a 429 or 503 response"),
   current: z
     .object({ concurrency: z.number().optional(), rpm: z.number().optional() })
     .optional()
@@ -167,7 +158,7 @@ const autoInputShape = {
   url: z
     .string()
     .url()
-    .describe("Target URL. Public hosts only - private/reserved ranges (RFC 1918 10/8, 172.16/12, 192.168/16, loopback 127/8, link-local, IPv6 ULA fc00::/7, IPv6 loopback ::1, plus *.local mDNS) are refused with code `ssrf_blocked`. Example: https://example.com/page. Use {ts} anywhere in the URL to insert the current Unix timestamp for cache-bust."),
+    .describe("Public target URL. Private or reserved targets return `ssrf_blocked`. Use {ts} in the URL to insert the current Unix timestamp. Example: https://example.com/page."),
   method: z
     .string()
     .min(1)
@@ -176,7 +167,7 @@ const autoInputShape = {
   headers: z
     .array(z.tuple([z.string(), z.string()]))
     .optional()
-    .describe("Custom HTTP headers to send to the TARGET, as [name, value] tuples. Example: [[\"Accept\", \"application/json\"], [\"Authorization\", \"Bearer ...\"]]"),
+    .describe("Custom HTTP headers as [name, value] tuples. Example: [[\"Accept\", \"application/json\"], [\"Authorization\", \"Bearer ...\"]]"),
   data: z
     .union([z.string(), z.record(z.string(), z.unknown())])
     .optional()
@@ -185,39 +176,36 @@ const autoInputShape = {
   returnSession: z
     .boolean()
     .optional()
-    .describe("Return the {proxy, cookies, userAgent} session triple of the winning session so you can replay it through foura_single / foura_proxy later. Default true. Send false for a leaner response when you only need the content."),
+    .describe("Return reusable {proxy, cookies, userAgent} values for follow-up calls. Default true. Send false for a leaner response when you only need the content."),
   forceProxy: z
     .boolean()
     .optional()
-    .describe("Always reach the target through a rotating proxy, never from FourA's own egress. Default true (the target never sees FourA's origin IP). Send false to allow the cheaper direct path - but note some trust-gated defenses actually resolve more easily from the direct egress, so forcing a proxy can make those targets harder (more attempts / credits)."),
+    .describe("Require proxy routing for every target request. Default true. Send false to allow direct HTTP when suitable."),
   timeout_ms: z
     .number()
     .int()
     .min(5_000)
     .max(180_000)
     .optional()
-    .describe("Total time budget in ms for the WHOLE operation - auto fires several internal attempts and they must all fit inside this. Default 120000, max 180000. Auto portions the budget across its attempts; it does not hand the whole budget to one attempt."),
+    .describe("Total time budget in ms for the whole operation. Every attempt must fit inside it. Default 120000, max 180000."),
   ignoreProxies: z
     .array(z.string())
     .optional()
-    .describe("Exits to AVOID - base36 proxy ids (like \"4DZ3VE\") or proxy URLs. Auto skips a warm session on one of these and tells its internal proxy search to avoid them too. Use to rotate away from an exit that just got blocked."),
+    .describe("Exits to avoid - base36 proxy IDs (like \"4DZ3VE\") or proxy URLs. Use this to rotate away from an exit that was just blocked."),
   followRedirects: z
     .number()
     .int()
     .min(0)
     .max(20)
     .optional()
-    .describe("Follow up to N redirects on the cheap (direct / proxy) rungs so a 301/302 lands on the real content instead of being returned as-is. Default 5; 0 = don't follow. The browser rung follows redirects natively."),
-  //  parity - opt-in offload. Default false → response inline regardless of
-  // size so clients that can't read resource_link blocks still get usable output.
+    .describe("Follow up to N redirects for HTTP and proxy requests. Default 5; 0 means don't follow. Browser navigation handles redirects itself."),
   offload_large: z
     .boolean()
     .optional()
-    .describe("If true, response bodies >= 50KB are written to disk and returned as a resource_link instead of inlined. Saves token context but requires a client that supports `resources/read`. Default false."),
+    .describe("If true, response bodies of 50 KB or more are returned as a resource_link instead of inlined. Default false. Read the returned offloaded_resource_uri with resources/read."),
 };
 
-// Convert any handler-level crash OR output-validation failure into the
-// documented {service, code, error} envelope (same guard as the other tools).
+// Convert handler and output-validation failures into the documented error envelope.
 async function guardHandler(
   service: "auto",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,19 +254,12 @@ export function registerAutoTool(server: McpServer): void {
     {
       title: "FourA - auto (smart fetch, picks the method for you)",
       description:
-        "Give a URL, get the content back. The default first choice for any page when you just want " +
-        "the data and don't want to decide how to fetch it. Internally it walks a cost-aware ladder - a " +
-        "fast direct request first, then a rotating proxy, then a full browser session - escalating only " +
-        "as far as the target forces it, solving common bot challenges (Cloudflare, and similar) on the " +
-        "way, and cheaply replaying a warm session on repeat calls to the same host. It learns the right " +
-        "settings per host on its own, so there are no maxTries / pool / retry knobs to tune. " +
-        "Pass `validate` (a substring the real page must contain) on protected targets so it can tell a " +
-        "real page from a challenge page. The response includes a `meta` trace (which rung delivered, " +
-        "credits spent) and, by default, the winning `session` ({proxy, cookies, userAgent}) so you can " +
-        "replay it through foura_single / foura_proxy afterwards. " +
-        "Use one of the lower-level tools instead only when you need explicit control: foura_single for a " +
-        "specific raw HTTP request, foura_proxy to drive the rotation/exit yourself, foura_browser for a " +
-        "scripted browser session.",
+        "Give it a public URL and get the content back. This is the default when you don't want to choose " +
+        "between HTTP, proxy rotation, and a full browser. On protected targets, or whenever HTTP 200 may " +
+        "still be a challenge or incomplete page, pass validate.data.accept with text unique to the real " +
+        "content. Auto keeps trying until the response satisfies it. The response includes completion details and, " +
+        "by default, reusable session values for follow-up calls. Use a lower-level tool when you need " +
+        "direct control over HTTP, proxy selection, or browser navigation.",
       inputSchema: autoInputShape,
       outputSchema: autoOutputShape,
       annotations: {
@@ -311,7 +292,7 @@ export function registerAutoTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.8 (auto)",
+          "User-Agent": "foura-mcp/0.5.0 (auto)",
         },
         body: JSON.stringify(upstreamBody),
         headersTimeout: 200_000,
@@ -340,9 +321,7 @@ export function registerAutoTool(server: McpServer): void {
         };
       }
 
-      // Gateway-level error (rate limit / auth / capacity) - auto itself ALWAYS
-      // replies transport-200, so a non-2xx transport status is the gateway
-      // rejecting before auto ran. Surface it like the other tools do.
+      // Handle transport-level rate-limit, authentication, and capacity errors.
       if (res.statusCode < 200 || res.statusCode >= 300) {
         const e = parsed as Record<string, unknown>;
         const errMsg = typeof e.error === "string" ? e.error : "Unknown";
@@ -369,10 +348,7 @@ export function registerAutoTool(server: McpServer): void {
         attempts?: number;
       };
 
-      // auto returns transport-200; the real verdict is in the body. The
-      // PRIMARY error signal is a non-empty `error` (the ladder failed). A
-      // non-2xx body.status WITHOUT an error is a legitimate success (the
-      // client's validate accepted that status), so it is NOT an error.
+      // A non-empty error marks failure. A validated non-2xx status can still be successful.
       if (typeof parsedObj.error === "string" && parsedObj.error.length > 0) {
         const innerStatus = typeof parsedObj.status === "number" ? parsedObj.status : 0;
         return {
@@ -435,5 +411,5 @@ export function registerAutoTool(server: McpServer): void {
   );
 }
 
-// Export internals for unit tests + schema-parity checks.
+// Export helpers for unit and schema checks.
 export const __test = { deriveCode, ResponseHeadersSchema, AutoValidateSchema, autoInputShape, autoOutputShape, guardHandler, AUTO_API_URL };

@@ -10,7 +10,7 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-describe("Cookies — end-to-end chain across two calls", () => {
+describe("Cookies - end-to-end chain across two calls", () => {
   test("1. Set in foura_single, send in next foura_single", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.cookies_read,

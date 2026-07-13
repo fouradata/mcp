@@ -60,18 +60,18 @@ const SingleValidateSchema = z
         accept: z
           .record(z.string(), z.string())
           .optional()
-          .describe("Map of header-name-substring → header-value-substring (both case-insensitive). Response PASSES if AT LEAST ONE entry matches (header name contains the key AND value contains the value). Checked across all redirect hops. Empty / omitted = no header requirement."),
+          .describe("Case-insensitive header substring rules. The response passes when at least one name/value pair matches across the redirect chain."),
         fail: z
           .record(z.string(), z.string())
           .optional()
-          .describe("Map of header-name-substring → header-value-substring (both case-insensitive). Response is treated as FAILURE if ANY entry matches a response header. Use to reject challenge / block headers, e.g. {\"x-blocked\": \"bot\", \"server\": \"cloudflare\"}."),
+          .describe("Case-insensitive header substring rules that reject the response when any name/value pair matches."),
       })
       .optional()
       .describe("Header validation: pass when an accepted header matches, fail when a blocklisted header matches."),
     data: z
       .object({
         accept: z.array(z.string()).optional().describe("Substrings the response body must contain"),
-        fail: z.array(z.string()).optional().describe("Substrings the response body must NOT contain"),
+        fail: z.array(z.string()).optional().describe("Substrings the response body must not contain"),
       })
       .optional()
       .describe("Body validation: pass when the body contains an expected substring (accept), fail when it contains a blocked one (fail)."),
@@ -79,8 +79,8 @@ const SingleValidateSchema = z
   .optional()
   .describe("Post-fetch response validation. When the response fails these checks the tool returns an error envelope.");
 
-// the header array - one entry per response in the redirect chain. `result` holds
-// the HTTP status line; all other keys are response header name → value pairs.
+// One header entry per response in the redirect chain. `result` holds
+// the HTTP status line; all other keys are response header name -> value pairs.
 // Multi-value headers (Set-Cookie, Link, WWW-Authenticate, etc.) come as
 // `string | string[]` from the HTTP engine response-header.
 const ResponseHeadersSchema = z
@@ -100,7 +100,7 @@ const singleOutputShape = {
   status: z.number().int().optional().describe("HTTP status code from the target. `0` indicates the request failed before any HTTP response (DNS failure, connection refused, timeout) - check the `error` field for the underlying reason."),
   // `Buffer | the header array` - Buffer when raw mode is requested upstream
   // (we don't expose that mode but accept it permissively). Array entries
-  // hold the the HTTP engine response-header shape with multi-value header support.
+  // support multi-value headers.
   headers: z
     .union([z.array(ResponseHeadersSchema), z.string(), z.record(z.string(), z.unknown())])
     .optional()
@@ -114,8 +114,8 @@ const singleOutputShape = {
     .union([z.number(), z.string(), z.null()])
     .optional()
     .describe("Wall-clock request duration in seconds. Number when present; string in some variants; null when the request never started."),
-  // Offload path - MCP layer adds these when body >= 50KB AND offload_large=true
-  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>"),
+  // Resource-link fields used when the response body is offloaded.
+  offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
   size_bytes: z.number().int().optional().describe("Total offloaded body size in bytes"),
   // Error path - common envelope across all FourA services (see foura.ai/docs/api/errors)
   error: z.string().optional().describe("Human-readable error message"),
@@ -133,14 +133,12 @@ const singleOutputShape = {
 };
 
 const singleInputShape = {
-  // method is z.string() in upstream (packages/types/src/single.ts:29) - .
-  // We don't restrict to a closed enum; the HTTP engine accepts arbitrary verbs
-  // (PROPFIND, MKCOL, REPORT, etc.) used by WebDAV / OData / GraphQL clients.
+  // Keep the method open for WebDAV, OData, GraphQL, and other HTTP extensions.
   method: z
     .string()
     .min(1)
     .describe("HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS, or any WebDAV verb like PROPFIND/MKCOL)"),
-  url: z.string().url().describe("Target URL. Public hosts only - private/reserved ranges (RFC 1918 10/8, 172.16/12, 192.168/16, loopback 127/8, link-local, IPv6 ULA fc00::/7, IPv6 loopback ::1, plus *.local mDNS) are refused with code `ssrf_blocked`. Example: https://example.com/page or https://api.example.com/v1/users. Use {ts} anywhere in the URL to insert current Unix timestamp for cache-bust."),
+  url: z.string().url().describe("Public target URL. Private or reserved targets return `ssrf_blocked`. Use {ts} in the URL to insert the current Unix timestamp. Example: https://api.example.com/v1/users."),
   headers: z
     .array(z.tuple([z.string(), z.string()]))
     .optional()
@@ -148,7 +146,7 @@ const singleInputShape = {
   unblocker: z
     .boolean()
     .optional()
-    .describe("Inject realistic browser headers (User-Agent, Sec-Ch-Ua, Accept-Encoding, …) and make the request look like it's coming from a real browser at the wire level. Default false - set true for any target with anti-bot or WAF (Cloudflare, Akamai, PerimeterX, Datadome). Cheap to leave on for production scrapes."),
+    .describe("Add common browser headers such as User-Agent, Sec-Ch-Ua, and Accept-Encoding. Default false. Enable it for targets that reject basic HTTP requests."),
   data: z
     .union([z.string(), z.record(z.string(), z.unknown())])
     .optional()
@@ -158,12 +156,9 @@ const singleInputShape = {
     .optional()
     .describe(
       "Optional proxy. Two forms: (1) URL `http://host:port` or `socks5://host:port`; " +
-      "(2) base36 ID from foura_proxy (e.g. `4DZ3VE`) - same exit IP. For rotation, use foura_proxy.",
+      "(2) base36 ID from foura_proxy (e.g. `4DZ3VE`) to reuse the same exit. For rotation, use foura_proxy.",
     ),
-  // Note: `proxyId` (number) is intentionally NOT exposed. The backend zod
-  // schema declares it, but no code path reads it - gateway only resolves
-  // base36 IDs from the `proxy` string field, and the HTTP engine never reads
-  // request.proxyId. Exposing the dead field would silently no-op.
+  // Use the public `proxy` string field for both URLs and encoded proxy IDs.
   timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Overall request timeout in ms (max 120000, default 15000)"),
   connect_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms for establishing the TCP/TLS connection (0-120000). Omit to use the default."),
   accept_timeout_ms: z.number().int().min(0).max(120_000).optional().describe("Timeout in ms to receive the first response byte after the request is sent (0-120000). Omit for the default."),
@@ -179,23 +174,13 @@ const singleInputShape = {
   tryJsonData: z.boolean().optional().describe("If true, attempt JSON.parse on the response body. On success, `data` is the parsed value (typically object or array). On parse failure, `data` silently stays as the original string - no error, no warning. Set false (or omit) when you need to detect parse failures explicitly."),
   returnBuffer: z.boolean().optional().describe("Return raw bytes as a serialized Buffer JSON shape (`{type:\"Buffer\", data:[byte, ...]}`, bytes 0-255) instead of decoded string. Use for binary responses (images, protobuf). Reconstruct: `Buffer.from(data.data)` in Node, `new Uint8Array(data.data)` elsewhere."),
   validate: SingleValidateSchema,
-  //  fix - opt-in offload. Default false → response inline regardless
-  // of size so Claude Desktop (which can't read resource_link content blocks)
-  // gets usable output on real product pages.
   offload_large: z
     .boolean()
     .optional()
-    .describe("If true, response bodies >= 50KB are written to disk and returned as a resource_link instead of inlined. Saves token context but requires a client that supports `resources/read`. Default false."),
+    .describe("If true, response bodies of 50 KB or more are returned as a resource_link instead of inlined. Default false. Read the returned offloaded_resource_uri with resources/read."),
 };
 
-//  fix - convert any handler-level crash OR output-validation failure
-// into the documented {service, code, error} envelope. Two guards:
-//   1. Outer try/catch around handler - catches throws (network, JSON, etc).
-//   2. Output validation against outputSchema BEFORE returning - catches
-//      shape mismatches that would otherwise bubble up as MCP -32602 errors
-//      without a structuredContent envelope.
-// Return type is `any` so the strict CallToolResult union from the SDK
-// doesn't trip on our heterogeneous content arrays.
+// Convert handler and output-validation failures into the documented error envelope.
 async function guardHandler(
   service: "single" | "proxy" | "browser",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -244,14 +229,9 @@ export function registerSingleTool(server: McpServer): void {
     {
       title: "FourA - single HTTP request",
       description:
-        "Send one HTTP request and return the response. Fastest of the four tools (typically 200ms-2s). " +
-        "Use for static pages, JSON APIs, server-rendered HTML. Set unblocker:true if the target has " +
-        "wire-level anti-bot protection. Switch to foura_proxy if you get blocked - status 403, status 429, " +
-        "captcha page, OR response carries `x-vercel-mitigated: challenge` / `cf-mitigated: challenge` " +
-        "headers, OR body title matches `Vercel Security Checkpoint` / `Just a moment` / `Attention Required` / " +
-        "`We're verifying your browser`. For these tier-1 WAF challenges call foura_proxy with maxTries:25-30 " +
-        "(the default 5 is sized for lightly-blocked sites). On success, chain the returned proxy ID into " +
-        "foura_browser.proxy if the page also needs JavaScript to render.",
+        "Send one HTTP request and return the response. Use it for static pages, JSON APIs, and " +
+        "server-rendered HTML. Set unblocker:true for targets that reject basic HTTP requests. " +
+        "Switch to foura_proxy if the response is blocked, and use foura_browser when the page needs JavaScript.",
       inputSchema: singleInputShape,
       outputSchema: singleOutputShape,
       annotations: {
@@ -282,7 +262,7 @@ export function registerSingleTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.4.8 (single)",
+          "User-Agent": "foura-mcp/0.5.0 (single)",
         },
         body: JSON.stringify(upstreamBody),
       });
@@ -327,10 +307,7 @@ export function registerSingleTool(server: McpServer): void {
 
       const parsedObj = parsed as { data?: unknown; headers?: unknown; status?: number; total_time?: unknown; error?: unknown };
 
-      //  fix - the upstream API returns HTTP 200 + {error, status, headers, data}
-      // when the HTTP engine itself failed (DNS, refused, timeout) or when validate.*
-      // rejected the response. The api gateway forwards the inner status
-      // verbatim. Surface this as a structured error instead of a fake success.
+      // A transport-200 response can still carry a request or validation error.
       if (typeof parsedObj.error === "string" && parsedObj.error.length > 0) {
         const innerStatus = typeof parsedObj.status === "number" ? parsedObj.status : 0;
         return {
@@ -392,5 +369,5 @@ export function registerSingleTool(server: McpServer): void {
   );
 }
 
-// Export internals for unit tests + schema-parity checks.
+// Export helpers for unit and schema checks.
 export const __test = { deriveCode, ResponseHeadersSchema, singleInputShape, singleOutputShape, guardHandler };

@@ -10,13 +10,13 @@ const load = (name) => JSON.parse(readFileSync(path.join(FIX, name), "utf8"));
 
 const S = single.outputSchema;
 
-describe("single outputSchema — fixture parity", () => {
+describe("single outputSchema - fixture parity", () => {
   test("1. single-200-simple validates", () => {
     const r = S.safeParse(load("single-200-simple.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
   });
 
-  test("2. single-200-cookies (Set-Cookie as ARRAY — regression anchor) validates", () => {
+  test("2. single-200-cookies (Set-Cookie as ARRAY - regression anchor) validates", () => {
     const fixture = load("single-200-cookies.json");
     const setCookie = fixture.headers[0]["set-cookie"];
     assert.ok(Array.isArray(setCookie) && setCookie.length === 2, "fixture itself must have array Set-Cookie");
@@ -36,17 +36,17 @@ describe("single outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("5. single-200-total-time-string (regression — total_time as string) validates", () => {
+  test("5. single-200-total-time-string (regression - total_time as string) validates", () => {
     const r = S.safeParse(load("single-200-total-time-string.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
   });
 
-  test("6. single-200-total-time-null (regression — total_time=null) validates", () => {
+  test("6. single-200-total-time-null (regression - total_time=null) validates", () => {
     const r = S.safeParse(load("single-200-total-time-null.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
   });
 
-  test("7. single-200-with-error-body (regression — 2xx-with-error) parses raw shape", () => {
+  test("7. single-200-with-error-body (regression - 2xx-with-error) parses raw shape", () => {
     // The schema accepts this shape (error field is optional); the BUG fix is
     // in the handler code path that flags it as an error envelope, tested in
     // integration-stdio/errors.test.mjs.
@@ -74,7 +74,7 @@ describe("single outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("12. error-503-backend-unavailable (api-gateway 503 envelope shape)", () => {
+  test("12. error-503-backend-unavailable (upstream 503 envelope shape)", () => {
     const r = S.safeParse(load("error-503-backend-unavailable.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
   });
@@ -110,7 +110,7 @@ describe("single outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("17. structuredContent service ∈ enum", () => {
+  test("17. structuredContent service is in the enum", () => {
     for (const s of ["single", "proxy", "browser", "api"]) {
       const r = S.safeParse({ error: "x", service: s, code: "auth_failed" });
       assert.equal(r.success, true, `failed for service=${s}`);
@@ -120,7 +120,7 @@ describe("single outputSchema — fixture parity", () => {
   });
 
   test("18. response headers with multi-value (Set-Cookie array) catchall accepts", () => {
-    const r = single.headerInfoSchema.safeParse({
+    const r = single.responseHeadersSchema.safeParse({
       result: { code: 200 },
       "set-cookie": ["a=1", "b=2"],
     });
@@ -128,7 +128,7 @@ describe("single outputSchema — fixture parity", () => {
   });
 
   test("19. response headers with single-value Set-Cookie string also OK", () => {
-    const r = single.headerInfoSchema.safeParse({
+    const r = single.responseHeadersSchema.safeParse({
       result: { code: 200 },
       "set-cookie": "single=value",
     });
@@ -136,7 +136,7 @@ describe("single outputSchema — fixture parity", () => {
   });
 
   test("20. response headers result fields all optional", () => {
-    const r = single.headerInfoSchema.safeParse({ "x-foo": "bar" });
+    const r = single.responseHeadersSchema.safeParse({ "x-foo": "bar" });
     assert.equal(r.success, true);
   });
 

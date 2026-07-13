@@ -35,7 +35,7 @@ describe("single inputSchema", () => {
   });
 
   test("8. non-enum method accepted (regression fix)", () => {
-    // the upstream API upstream is z.string() — WebDAV/CalDAV verbs must work.
+    // The method stays open so WebDAV and CalDAV verbs work.
     assert.equal(S.safeParse({ method: "PROPFIND", url: "https://example.com" }).success, true);
     assert.equal(S.safeParse({ method: "MKCOL", url: "https://example.com" }).success, true);
     assert.equal(S.safeParse({ method: "CONNECT", url: "https://example.com" }).success, true);

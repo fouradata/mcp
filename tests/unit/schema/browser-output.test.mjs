@@ -10,7 +10,7 @@ const load = (name) => JSON.parse(readFileSync(path.join(FIX, name), "utf8"));
 
 const S = browser.outputSchema;
 
-describe("browser outputSchema — fixture parity", () => {
+describe("browser outputSchema - fixture parity", () => {
   test("1. browser-200-small validates", () => {
     const r = S.safeParse(load("browser-200-small.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
@@ -47,7 +47,7 @@ describe("browser outputSchema — fixture parity", () => {
     }
   });
 
-  test("6. browser-200-body-object validates (regression — body can be object)", () => {
+  test("6. browser-200-body-object validates (regression - body can be object)", () => {
     const f = load("browser-200-body-object.json");
     assert.equal(typeof f.body, "object");
     assert.equal(Array.isArray(f.body), false);
@@ -61,7 +61,7 @@ describe("browser outputSchema — fixture parity", () => {
   });
 
   test("8. browser-200-with-error-body schema-validates (handler flags as error)", () => {
-    // regression — schema accepts this shape; handler converts to envelope.
+    // regression - schema accepts this shape; handler converts to envelope.
     const r = S.safeParse(load("browser-200-with-error-body.json"));
     assert.equal(r.success, true);
   });
@@ -71,7 +71,7 @@ describe("browser outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("10. headers permissive — non-string values allowed (regression)", () => {
+  test("10. headers permissive - non-string values allowed (regression)", () => {
     // CDP Protocol.Network.Headers values can be arrays in some versions.
     const r = S.safeParse({
       status: 200,

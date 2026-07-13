@@ -102,7 +102,7 @@ describe("proxy inputSchema", () => {
     }).success, true);
   });
 
-  test("20. inner method PROPFIND (regression — z.string())", () => {
+  test("20. inner method PROPFIND (regression - z.string())", () => {
     assert.equal(S.safeParse({
       request: { method: "PROPFIND", url: "https://example.com" },
     }).success, true);
@@ -119,5 +119,30 @@ describe("proxy inputSchema", () => {
     assert.equal(S.safeParse({
       request: { method: "POST", url: "https://example.com", data: "x" },
     }).success, true);
+  });
+
+  test("23. exitCountries normalizes case, whitespace, and duplicates", () => {
+    const r = S.safeParse({
+      request: { method: "GET", url: "https://example.com" },
+      exitCountries: [" cz ", "GB", "CZ"],
+    });
+    assert.equal(r.success, true);
+    assert.deepEqual(r.data?.exitCountries, ["CZ", "GB"]);
+  });
+
+  test("24. exitCountries accepts provider code XK", () => {
+    assert.equal(S.safeParse({
+      request: { method: "GET", url: "https://example.com" },
+      exitCountries: ["XK"],
+    }).success, true);
+  });
+
+  test("25. exitCountries rejects empty and malformed values", () => {
+    for (const exitCountries of [[], ["USA"], ["1A"], ["C"]]) {
+      assert.equal(S.safeParse({
+        request: { method: "GET", url: "https://example.com" },
+        exitCountries,
+      }).success, false);
+    }
   });
 });

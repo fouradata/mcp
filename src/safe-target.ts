@@ -2,19 +2,7 @@ import { lookup } from "node:dns/promises";
 import type { LookupAddress } from "node:dns";
 import { isIPv4, isIPv6 } from "node:net";
 
-/**
- * SSRF protection - refuse target URLs that resolve to private / reserved IPs.
- *
- * This is a TRANSPORT-LEVEL guard (same carve-out as auth.ts): protects the
- * forwarding path identically regardless of which endpoint is being called,
- * so it lives in one module and is imported by every tool. Per-endpoint
- * product code (schemas, paths, response parsing) remains fully duplicated.
- *
- * Pragmatic mode: we resolve once and verify, then forward the original
- * hostname to the upstream FourA API. The upstream resolves again seconds
- * later - a small TOCTOU window remains but catches all literal-IP and
- * ordinary-DNS attacks.
- */
+/** Refuse target URLs that resolve to private or reserved addresses. */
 
 interface V4Block {
   readonly base: number;
@@ -71,17 +59,16 @@ function isReservedV6(addr: string): boolean {
   const a = addr.toLowerCase();
   if (a === "::" || a === "::1") return true;
   const firstGroup = a.split(":")[0] ?? "";
-  // ULA fc00::/7 - first hex of first group is f, second is c or d
+  // ULA fc00::/7
   if (/^f[cd][0-9a-f]{0,2}$/.test(firstGroup)) return true;
-  // link-local fe80::/10 - first group starts fe8, fe9, fea, feb
+  // Link-local fe80::/10
   if (/^fe[89ab][0-9a-f]{0,1}$/.test(firstGroup)) return true;
   // documentation 2001:db8::/32
   if (/^2001:0?db8(:|$)/.test(a)) return true;
   // IPv4-mapped: ::ffff:x.x.x.x (dotted-quad form) - check embedded v4
   const v4mappedDotted = /^::ffff:([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$/.exec(a);
   if (v4mappedDotted?.[1]) return isReservedV4(v4mappedDotted[1]);
-  // IPv4-mapped canonical hex form (Node URL normalises ::ffff:192.168.1.1
-  // to ::ffff:c0a8:101). Match ::ffff: prefix + two hex groups, decode.
+  // Node normalizes dotted IPv4-mapped addresses into two hexadecimal groups.
   const v4mappedHex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(a);
   if (v4mappedHex) {
     const high = parseInt(v4mappedHex[1] ?? "0", 16);

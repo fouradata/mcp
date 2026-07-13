@@ -12,5 +12,5 @@ Dockerfile
 docker-compose.yml
 README.md
 
-# scripts/ is INTENTIONALLY shipped — audit-tokens.mjs runs during CI
+# scripts/ is included because audit-tokens.mjs runs during CI
 # inside the built image. Don't add scripts/ here.

@@ -1,4 +1,4 @@
-// regression regression — opt-in offload, default INLINE.
+// Opt-in offload regression coverage; the default remains inline.
 // Default behavior must work in Claude Desktop (no resources/read support).
 import { test, before, after, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -27,19 +27,19 @@ after(async () => {
 
 const TWO_MIN = 120_000;
 
-describe("regression regression — opt-in offload (Claude Desktop unblock)", () => {
-  test("1. Large page + offload_large:false (DEFAULT) → INLINE in structuredContent", async () => {
+describe("opt-in offload with an inline default", () => {
+  test("1. Large page + offload_large:false stays inline in structuredContent", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.wikipedia, followRedirects: 5, unblocker: true,
     }, TWO_MIN);
     assertSuccess(r);
-    // structuredContent MUST have data inline; no resource_link content block.
+    // structuredContent must have data inline and no resource_link content block.
     assert.ok(r.structuredContent.data, "data must be inline by default");
     assert.equal(getResourceLink(r), null, "no resource_link content block when offload_large=false");
     assert.equal(r.structuredContent.offloaded_resource_uri, undefined);
   });
 
-  test("2. Large page + offload_large:true → resource_link issued, data omitted", async () => {
+  test("2. Large page + offload_large:true -> resource_link issued, data omitted", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.wikipedia, followRedirects: 5, unblocker: true,
       offload_large: true,
@@ -53,7 +53,7 @@ describe("regression regression — opt-in offload (Claude Desktop unblock)", ()
     assert.equal(r.structuredContent.data, undefined, "data must be omitted in offload path");
   });
 
-  test("3. Small page + offload_large:true → still inline (below threshold)", async () => {
+  test("3. Small page + offload_large:true -> still inline (below threshold)", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.static, offload_large: true,
     }, TWO_MIN);
@@ -62,7 +62,7 @@ describe("regression regression — opt-in offload (Claude Desktop unblock)", ()
     assert.equal(getResourceLink(r), null);
   });
 
-  test("4. Small page + offload_large:false → inline", async () => {
+  test("4. Small page + offload_large:false -> inline", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.static,
     }, TWO_MIN);
@@ -71,7 +71,7 @@ describe("regression regression — opt-in offload (Claude Desktop unblock)", ()
     assert.equal(getResourceLink(r), null);
   });
 
-  test("5. Offload → resources/read returns full body", async () => {
+  test("5. Offload -> resources/read returns full body", async () => {
     const r = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.wikipedia, followRedirects: 5, unblocker: true,
       offload_large: true,
@@ -85,7 +85,7 @@ describe("regression regression — opt-in offload (Claude Desktop unblock)", ()
     assert.equal(content.mimeType, "text/html");
   });
 
-  test("6. foura_proxy + offload_large:true → resource_link + proxy field still in structuredContent", async () => {
+  test("6. foura_proxy + offload_large:true -> resource_link + proxy field still in structuredContent", async () => {
     const r = await client.callTool("foura_proxy", {
       maxTries: 3,
       request: {
@@ -112,7 +112,7 @@ describe("regression regression — opt-in offload (Claude Desktop unblock)", ()
     }
   });
 
-  test("8. Same large URL with toggle — proves opt-in IS the difference", async () => {
+  test("8. Same large URL with toggle - proves opt-in IS the difference", async () => {
     const inline = await client.callTool("foura_single", {
       method: "GET", url: TEST_SITES.wikipedia, followRedirects: 5, unblocker: true,
     }, TWO_MIN);

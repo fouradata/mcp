@@ -1,5 +1,5 @@
-// Audit 1.5 regression — tenant isolation on payload cache.
-// Store a payload as tenant A → confirm tenant B can't read it via
+// Tenant-isolation regression coverage for offloaded content.
+// Store a payload as tenant A -> confirm tenant B can't read it via
 // resources/read on the same URI.
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -16,7 +16,7 @@ let payloadsDir;
 
 before(async () => {
   payloadsDir = mkdtempSync(path.join(tmpdir(), "foura-mcp-isolation-"));
-  // Tenant A uses the real test key — needed for the upstream call to succeed.
+  // Tenant A uses the real test key - needed for the upstream call to succeed.
   clientA = await spawnLocalServer({
     FOURA_API_KEY: TEST_KEY,
     FOURA_MCP_PAYLOADS_DIR: payloadsDir,
@@ -36,8 +36,8 @@ after(async () => {
 
 const TWO_MIN = 120_000;
 
-describe("Audit 1.5 — tenant isolation on payload cache", () => {
-  test("1. Tenant A offloads a large page → resource_link issued", async () => {
+describe("tenant isolation for offloaded content", () => {
+  test("1. Tenant A offloads a large page -> resource_link issued", async () => {
     const r = await clientA.callTool("foura_single", {
       method: "GET",
       url: TEST_SITES.wikipedia,

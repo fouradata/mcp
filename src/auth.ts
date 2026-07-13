@@ -1,19 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 /**
- * Shared FourA auth.
- *
- * The API key authenticates the CALLER, not the endpoint - one key opens
- * /single/, /proxy/, and /browser/. So this lives in one place and is
- * imported by every tool. (Schemas, paths, and per-endpoint behavior remain
- * fully duplicated across tool files - see
- * .)
- *
- * Dual-mode:
- *   - stdio: the user sets FOURA_API_KEY in env (e.g. via claude_desktop_config).
- *   - HTTP: each incoming /mcp request supplies its own key via
- *     Authorization: Bearer pk_live_..., which the transport scopes into
- *     AsyncLocalStorage before invoking the tool handler.
+ * Read the API key from the environment in stdio mode or from the current HTTP request scope.
  */
 const apiKeyContext = new AsyncLocalStorage<string>();
 
@@ -22,12 +10,7 @@ export function withApiKey<T>(key: string, fn: () => Promise<T>): Promise<T> {
 }
 
 export function getApiKey(): string {
-  // Inside a withApiKey() scope (the HTTP request path) that value is
-  // authoritative - even an empty string. We must NEVER fall through to the
-  // process env in HTTP mode: an unauthenticated request would otherwise
-  // silently borrow the operator's FOURA_API_KEY. The env fallback exists
-  // strictly for stdio mode, where there is no request scope at all
-  // (getStore() === undefined).
+  // An HTTP request scope, including an empty one, takes precedence over stdio configuration.
   const fromContext = apiKeyContext.getStore();
   if (fromContext !== undefined) {
     if (fromContext) return fromContext;

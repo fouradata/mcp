@@ -6,7 +6,7 @@ import path from "node:path";
 
 let storePayload, THRESHOLD_BYTES, hashApiKey, withApiKey;
 
-describe("resources — THRESHOLD_BYTES + storePayload (tenant-isolated)", () => {
+describe("resources - THRESHOLD_BYTES + storePayload (tenant-isolated)", () => {
   test("1. THRESHOLD_BYTES === 50_000", async () => {
     process.env.FOURA_MCP_PAYLOADS_DIR = mkdtempSync(path.join(tmpdir(), "foura-mcp-test-"));
     process.env.FOURA_API_KEY = "pk_live_unit_test_default_key";
@@ -23,8 +23,8 @@ describe("resources — THRESHOLD_BYTES + storePayload (tenant-isolated)", () =>
     assert.ok(Buffer.byteLength("a".repeat(50001), "utf8") >= THRESHOLD_BYTES);
   });
 
-  test("4. UTF-8 multibyte: 25000 emoji ≥ THRESHOLD", () => {
-    assert.ok(Buffer.byteLength("🚀".repeat(25000), "utf8") >= THRESHOLD_BYTES);
+  test("4. UTF-8 multibyte: 25000 four-byte characters reach the threshold", () => {
+    assert.ok(Buffer.byteLength("\u{1F680}".repeat(25000), "utf8") >= THRESHOLD_BYTES);
   });
 
   test("5. storePayload returns URI with prefix", async () => {
@@ -75,7 +75,7 @@ describe("resources — THRESHOLD_BYTES + storePayload (tenant-isolated)", () =>
     assert.ok(!existsSync(oldPath), `legacy flat path ${oldPath} should not exist`);
   });
 
-  test("12. two different keys → different namespace dirs (Audit 1.5)", async () => {
+  test("12. two different keys use different namespace directories", async () => {
     const keyA = "pk_live_tenant_A_xxx";
     const keyB = "pk_live_tenant_B_yyy";
     const storedA = await withApiKey(keyA, () => storePayload("A", "text/plain", "a"));

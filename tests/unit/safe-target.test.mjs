@@ -13,7 +13,7 @@ async function isBlocked(url) {
   }
 }
 
-describe("safe-target — public hosts (must NOT block)", () => {
+describe("safe-target - public hosts (must NOT block)", () => {
   test("1. example.com", async () => assert.equal(await isBlocked(TEST_SITES.static), false));
   test("2. 1.1.1.1 (Cloudflare)", async () => assert.equal(await isBlocked("https://1.1.1.1"), false));
   test("3. 8.8.8.8 (Google DNS)", async () => assert.equal(await isBlocked("https://8.8.8.8"), false));
@@ -22,10 +22,10 @@ describe("safe-target — public hosts (must NOT block)", () => {
   test("6. api.foura.ai resolves public", async () => assert.equal(await isBlocked("https://api.foura.ai"), false));
 });
 
-describe("safe-target — private/reserved hosts (must block)", () => {
+describe("safe-target - private/reserved hosts (must block)", () => {
   test("7. 127.0.0.1 loopback", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.loopback), true));
   test("8. 127.0.0.255 loopback edge", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.loopback_high), true));
-  test("9. localhost DNS→loopback", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.localhost), true));
+  test("9. localhost DNS->loopback", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.localhost), true));
   test("10. 0.0.0.0", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.any), true));
   test("11. 10.0.0.1 RFC1918", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.rfc1918_10), true));
   test("12. 172.16.0.1 RFC1918", async () => assert.equal(await isBlocked(TEST_SITES.ssrf.rfc1918_172), true));

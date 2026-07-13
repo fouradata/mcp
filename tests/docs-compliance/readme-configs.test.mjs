@@ -27,7 +27,7 @@ const LEAKY_TERMS = [
   /tls\s+fingerprint/i,
 ];
 
-describe("README — config blocks compliance", () => {
+describe("README - config blocks compliance", () => {
   test("1. every ```json block in README parses", () => {
     for (const b of jsonBlocks) {
       assert.doesNotThrow(() => JSON.parse(b), `Invalid JSON:\n${b.slice(0, 100)}`);
@@ -61,7 +61,7 @@ describe("README — config blocks compliance", () => {
 
   test("4. README mentions current package version somewhere", () => {
     // Either as a literal or in a generic install command pinned to the version.
-    // Not strict — version may legitimately be unpinned in install snippets.
+    // Not strict - version may legitimately be unpinned in install snippets.
     const mentioned = readme.includes(pkg.version) || readme.includes("@fouradata/mcp");
     assert.ok(mentioned, "README should mention the package name or current version");
   });
@@ -82,7 +82,7 @@ describe("README — config blocks compliance", () => {
     const hasCmdQ = /cmd[+\s-]?q|fully quit|quit\s+claude/i.test(readme);
     if (!hasCmdQ) {
       // Soft warning during transition; Stage 3 of plan applies the fix.
-      console.warn("  ⚠ regression — Cmd+Q warning not yet in README");
+      console.warn("  WARNING: regression - Cmd+Q warning not yet in README");
     }
   });
 
@@ -92,7 +92,7 @@ describe("README — config blocks compliance", () => {
     const urlIdx = readme.search(/"url":\s*"https:\/\/mcp\.foura\.ai/);
     if (stdioIdx === -1 || urlIdx === -1) return;
     if (stdioIdx > urlIdx) {
-      console.warn("  ⚠ regression — hosted URL config appears before stdio in README (Claude Desktop will reject)");
+      console.warn("  WARNING: regression - hosted URL config appears before stdio in README (Claude Desktop will reject)");
     }
   });
 });
