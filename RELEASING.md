@@ -17,4 +17,10 @@ run on a dirty tree or when the current anchors disagree.
 8. Tag that verified commit and push the immutable `vX.Y.Z` tag.
 
 The publish workflow verifies the tag, version anchors, tests, and package allowlist before npm
-publishes with provenance. Never move or reuse a release tag.
+publishes with provenance. After npm succeeds, a separate job creates a stable GitHub Release for
+the same commit using the matching `CHANGELOG.md` section. The release job is idempotent: a retry
+accepts an existing release only when its tag, commit, notes, and release state all match.
+
+Never move or reuse a release tag. If npm succeeds but the GitHub Release job fails, rerun only the
+failed job after correcting the problem; a full workflow rerun would attempt to republish the same
+npm version.
