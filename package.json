@@ -54,7 +54,7 @@
     "fsevents@2.3.3": true
   },
   "engines": {
-    "node": ">=22.11.0"
+    "node": ">=22.19.0"
   },
   "keywords": [
     "mcp",

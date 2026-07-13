@@ -7,6 +7,7 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 - `foura_proxy` accepts an optional `exitCountries` allowlist and returns the selected `exitCountry` on a scoped success. Unknown exits are excluded and no eligible scope is silently dropped.
 ### Changed
 - Tool guidance now makes protected-content validation, offloaded resource reads, and strict country-scope error handling explicit.
+- The minimum supported Node version is now 22.19, matching the runtime requirement of the HTTP client dependency.
 
 ## [0.4.8] - 2026-07-02
 ### Security

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node >= 22.11 (Node 24 recommended)
+- Node >= 22.19 (Node 24 recommended)
 
 ## Setup
 
