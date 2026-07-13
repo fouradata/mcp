@@ -80,4 +80,13 @@ describe("version anchors - all release surfaces agree with package.json", () =>
       }
     }
   });
+
+  test("12. CI exercises the declared minimum Node version with strict engine checks", () => {
+    const ci = readFileSync(path.join(REPO, ".github/workflows/ci.yml"), "utf8");
+    const minimumNode = pkg.engines?.node?.match(/^>=(\d+\.\d+\.\d+)$/)?.[1];
+    assert.ok(minimumNode, "package.json must declare an exact minimum Node version");
+    assert.ok(ci.includes(`node-version: '${minimumNode}'`), `CI must exercise Node ${minimumNode}`);
+    assert.match(ci, /NPM_CONFIG_ENGINE_STRICT:\s*['"]true['"]/);
+    assert.match(ci, /build-test:\s*\n\s+needs: node-floor/);
+  });
 });

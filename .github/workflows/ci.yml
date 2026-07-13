@@ -5,7 +5,18 @@ on:
 permissions:
   contents: read
 jobs:
+  node-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with: { node-version: '22.19.0', cache: 'npm' }
+      - run: npm ci
+        env:
+          NPM_CONFIG_ENGINE_STRICT: 'true'
+      - run: npm run test:ci
   build-test:
+    needs: node-floor
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
