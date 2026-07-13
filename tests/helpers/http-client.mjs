@@ -33,7 +33,7 @@ export class HttpClient {
     const text = await res.body.text();
     const ct = (res.headers["content-type"] ?? "").toString().toLowerCase();
     if (ct.includes("text/event-stream")) {
-      // Parse SSE — find first `data: {...}` line that decodes to a JSON-RPC message.
+      // Parse SSE - find first `data: {...}` line that decodes to a JSON-RPC message.
       const lines = text.split(/\r?\n/);
       for (const line of lines) {
         if (line.startsWith("data:")) {

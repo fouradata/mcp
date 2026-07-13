@@ -1,4 +1,4 @@
-// Shared spawn helper — one server per test FILE to amortize startup cost.
+// Shared spawn helper - one server per test FILE to amortize startup cost.
 import { spawnLocalServer } from "../helpers/stdio-client.mjs";
 
 export const TEST_KEY = process.env.FOURA_API_KEY

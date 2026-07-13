@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-# stdio image for the Docker MCP Catalog (mcp/foura). The root Dockerfile is the
-# HTTP / streamable-http variant used by the hosted endpoint; this one runs the
-# canonical stdio transport that Docker Desktop's MCP Toolkit spawns as a subprocess.
+# stdio image for the Docker MCP Catalog (mcp/foura). The root Dockerfile builds
+# the Streamable HTTP variant; this one runs the canonical stdio transport that
+# Docker Desktop's MCP Toolkit spawns as a subprocess.
 
 FROM node:24-alpine AS build
 WORKDIR /app
@@ -14,7 +14,7 @@ FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 LABEL org.opencontainers.image.source="https://github.com/fouradata/mcp" \
-      org.opencontainers.image.description="FourA MCP server - web scraping for AI agents (proxy + headless browser, past anti-bot)." \
+      org.opencontainers.image.description="FourA MCP - reliable web access for AI agents with smart HTTP, proxies, and a full browser." \
       org.opencontainers.image.licenses="MIT"
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force

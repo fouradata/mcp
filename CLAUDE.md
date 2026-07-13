@@ -32,12 +32,12 @@ Add this to `claude_desktop_config.json` (Settings -> Developer -> Edit Config):
 }
 ```
 
-**Gotcha:** fully quit Claude Desktop (`Cmd+Q` on macOS) before editing the config - if it is
-still running it overwrites your edits with its in-memory config on exit. Current Desktop builds
-reject a bare remote `url`, so use the stdio config above (or bridge with `mcp-remote`).
+**Gotcha:** fully quit Claude Desktop (`Cmd+Q` on macOS) before editing the config. If it is
+still running, it overwrites your edits with its in-memory config on exit. Use the stdio config
+above for Claude Desktop; remote transport support varies by client version.
 
-`offload_large` is not supported on Claude Desktop yet (it cannot read `resource_link` blocks) -
-leave it at the default `false`. Claude Code and Cursor support it.
+`offload_large` requires a client that can read MCP `resource_link` blocks. Leave it at the
+default `false` if your client doesn't support them.
 
 ## What you get
 
@@ -48,4 +48,4 @@ it returns the page, choosing the fetch method for you.
 
 ---
 
-FourA web scraping API: https://foura.ai  ·  MCP server page: https://foura.ai/mcp  ·  Docs: https://foura.ai/docs/mcp/server
+FourA: https://foura.ai | MCP server: https://foura.ai/mcp | Docs: https://foura.ai/docs/mcp/server

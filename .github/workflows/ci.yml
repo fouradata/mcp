@@ -12,7 +12,4 @@ jobs:
       - uses: actions/setup-node@v6
         with: { node-version: '24', cache: 'npm' }
       - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test:unit
-      - run: npm run test:docs
+      - run: npm run test:ci

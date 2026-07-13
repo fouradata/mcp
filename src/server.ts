@@ -10,10 +10,9 @@ export function createServer(): McpServer {
   const server = new McpServer({
     name: "foura-mcp",
     title: "FourA",
-    version: "0.4.8",
+    version: "0.5.0",
     description:
-      "Web scraping for AI agents: fetch any public page via a direct request, a rotating proxy, " +
-      "or a full headless browser, getting past anti-bot challenges.",
+      "Reliable web access for AI agents: smart HTTP, rotating proxies, and full-browser rendering.",
     websiteUrl: "https://foura.ai/mcp",
     icons: [
       {
@@ -27,8 +26,7 @@ export function createServer(): McpServer {
   registerSingleTool(server);
   registerProxyTool(server);
   registerBrowserTool(server);
-  // foura_auto is the smart default (URL in → content out); registered after the
-  // three primitives it orchestrates so the primitives keep their tools/list order.
+  // Keep the lower-level tools first in tools/list and register the default tool after them.
   registerAutoTool(server);
   registerResourceHandler(server);
   registerPrompts(server);

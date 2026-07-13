@@ -6,25 +6,19 @@ services:
     ports:
       - "3076:3076"
     restart: unless-stopped
-    # Audit 1.4 — runs as uid 1001 (`app` user). The bind-mounted volume must
-    # be writable by uid 1001 on the host. The deploy script chowns
-    # /srv/foura-mcp/payloads → 1001:1001 before bringing the container up.
+    # Match the non-root uid baked into the image.
     user: "1001:1001"
     environment:
       - NODE_ENV=production
       - PORT=3076
       - FOURA_API_BASE=${FOURA_API_BASE:-https://api.foura.ai/api}
       - FOURA_MCP_PAYLOADS_DIR=/data/payloads
-      # Audit 1.1 — allowlists default to production hostname. Self-hosters
-      # override via FOURA_MCP_ALLOWED_HOSTS / _ORIGINS.
+      # Override these allowlists when exposing the server on another hostname.
       - FOURA_MCP_ALLOWED_HOSTS=${FOURA_MCP_ALLOWED_HOSTS:-mcp.foura.ai,localhost,127.0.0.1,[::1]}
       - FOURA_MCP_ALLOWED_ORIGINS=${FOURA_MCP_ALLOWED_ORIGINS:-https://mcp.foura.ai,https://claude.ai,https://app.cursor.sh,https://app.cursor.com}
     volumes:
-      # Host-mounted resources cache; per-tenant subdirs created at runtime.
-      # Host cron TTLs files >1h.
-      - /srv/foura-mcp/payloads:/data/payloads
-    # Audit 3.1 — graceful shutdown grace period must exceed the 30s hard cap
-    # inside the process.
+      - foura-mcp-payloads:/data/payloads
+    # Allow the process to complete its bounded graceful shutdown.
     stop_grace_period: 35s
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:3076/healthz"]
@@ -32,3 +26,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  foura-mcp-payloads:

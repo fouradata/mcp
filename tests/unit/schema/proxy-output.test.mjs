@@ -10,7 +10,7 @@ const load = (name) => JSON.parse(readFileSync(path.join(FIX, name), "utf8"));
 
 const S = proxy.outputSchema;
 
-describe("proxy outputSchema — fixture parity", () => {
+describe("proxy outputSchema - fixture parity", () => {
   test("1. proxy-200 (success) validates", () => {
     const r = S.safeParse(load("proxy-200.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
@@ -36,12 +36,12 @@ describe("proxy outputSchema — fixture parity", () => {
   });
 
   test("5. proxy-200-all-fail-but-body shape validates (PrResponseError)", () => {
-    // regression anchor — schema must accept this shape. Handler flags as error.
+    // regression anchor - schema must accept this shape. Handler flags as error.
     const r = S.safeParse(load("proxy-200-all-fail-but-body.json"));
     assert.equal(r.success, true, r.success ? "" : JSON.stringify(r.error.issues));
   });
 
-  test("6. PrResponseError has NO status/headers/data — schema fields all optional", () => {
+  test("6. PrResponseError has NO status/headers/data - schema fields all optional", () => {
     const r = S.safeParse({ error: "all proxies failed", request: {}, total: 5.2 });
     assert.equal(r.success, true);
     assert.equal(r.data?.status, undefined);
@@ -79,7 +79,7 @@ describe("proxy outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("13. service field in envelope ∈ enum", () => {
+  test("13. service field in envelope is in the enum", () => {
     const r = S.safeParse({ service: "proxy", code: "rate_limited", error: "x" });
     assert.equal(r.success, true);
     assert.equal(S.safeParse({ service: "bogus", error: "x" }).success, false);
@@ -104,8 +104,8 @@ describe("proxy outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("17. ProxyHeaderInfo multi-value (regression)", () => {
-    const r = proxy.headerInfoSchema.safeParse({
+  test("17. response headers accept multi-value fields", () => {
+    const r = proxy.responseHeadersSchema.safeParse({
       result: { code: 200 },
       "set-cookie": ["a=1", "b=2"],
       link: ["<x>; rel=next", "<y>; rel=prev"],
@@ -113,7 +113,7 @@ describe("proxy outputSchema — fixture parity", () => {
     assert.equal(r.success, true);
   });
 
-  test("18. backend_status field accepted (api gateway 503 envelope)", () => {
+  test("18. backend_status field is accepted in a 503 envelope", () => {
     const r = S.safeParse({
       error: "Backend service unavailable",
       backend_status: 503,
@@ -130,11 +130,17 @@ describe("proxy outputSchema — fixture parity", () => {
   });
 
   test("20. country-scope structured errors validate", () => {
-    assert.equal(S.safeParse({
+    const result = S.safeParse({
       service: "proxy",
       code: "no_eligible_proxy",
       error: "country scope failed",
       details: { exitCountries: ["CZ"] },
-    }).success, true);
+    });
+    assert.equal(result.success, true);
+    assert.deepEqual(result.data?.details?.exitCountries, ["CZ"]);
+    assert.equal(S.safeParse({
+      code: "no_eligible_proxy",
+      details: { exitCountries: ["USA"] },
+    }).success, false);
   });
 });

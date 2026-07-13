@@ -102,7 +102,7 @@ describe("proxy inputSchema", () => {
     }).success, true);
   });
 
-  test("20. inner method PROPFIND (regression — z.string())", () => {
+  test("20. inner method PROPFIND (regression - z.string())", () => {
     assert.equal(S.safeParse({
       request: { method: "PROPFIND", url: "https://example.com" },
     }).success, true);

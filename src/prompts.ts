@@ -6,7 +6,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
  * MCP client UI (Claude Desktop / Cursor / etc) instead of figuring out the
  * tool orchestration themselves.
  *
- * Prompts are LAZY context - they only enter the LLM's window when invoked,
+ * Prompt text enters the model context only when the user invokes it,
  * unlike tool descriptions which are loaded on every turn. So we can be more
  * verbose here.
  */
@@ -61,7 +61,7 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text",
             text:
-              `Fetch ${url} using the foura_single tool with unblocker:true. Most news and blog sites are server-rendered, so HTTP is fastest (200ms-2s).\n\n` +
+              `Fetch ${url} using the foura_single tool with unblocker:true. Most news and blog sites are server-rendered, so start with HTTP.\n\n` +
               `If foura_single returns a 403, captcha page, or empty content, retry the same URL with foura_proxy (maxTries:3) - it routes through a rotating proxy pool.\n\n` +
               `From the response, extract:\n` +
               `- headline (the main H1, not the page title bar)\n` +
@@ -158,7 +158,7 @@ export function registerPrompts(server: McpServer): void {
     {
       title: "Fetch a list of URLs in parallel",
       description:
-        "Fetch multiple URLs concurrently and return per-URL outcome. Auto-falls back to foura_proxy on bot-block.",
+        "Fetch multiple URLs concurrently and return each outcome. Retry blocked URLs through foura_proxy.",
       argsSchema: {
         urls: z.string().describe("Comma-separated list of URLs to fetch"),
       },
@@ -175,7 +175,7 @@ export function registerPrompts(server: McpServer): void {
               `For any URL that returns 403, captcha page, or empty body - retry that single URL with foura_proxy (maxTries:3).\n\n` +
               `Return a JSON array, one entry per URL in input order:\n` +
               `[{"url": "...", "status": 200, "success": true, "body_size_bytes": 0, "via": "single|proxy", "error": null}, ...]\n\n` +
-              `Do NOT inline full response bodies in the output - only metadata. If the caller needs body content, they should call foura_single individually.`,
+              `Return only metadata, not full response bodies. If the caller needs body content, they should call foura_single individually.`,
           },
         },
       ],
@@ -211,7 +211,7 @@ export function registerPrompts(server: McpServer): void {
               (must_contain
                 ? `Pass validate.data.accept:["${must_contain}"] so auto keeps escalating until the real page (containing "${must_contain}") comes back, not a challenge page.\n\n`
                 : `If the first response looks like a challenge / block page rather than real content, re-call with validate.data.accept:["<a string the real page must contain>"] so auto knows what success looks like.\n\n`) +
-              `The response includes a meta trace (which rung delivered, credits spent) and a session ({proxy, cookies, userAgent}). If you need more pages from the same site afterwards, you can replay that session through foura_single / foura_proxy by passing session.proxy into their proxy field.\n\n` +
+              `The response includes completion details and a session ({proxy, cookies, userAgent}). For more pages from the same site, pass session.proxy into the proxy field of foura_single or foura_proxy.\n\n` +
               (extract
                 ? `From the returned content, extract: ${extract}. Return the result as JSON.`
                 : `Return the fetched content (or a concise summary of it, if it is large).`),

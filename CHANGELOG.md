@@ -2,18 +2,17 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
-## [Unreleased]
+## [0.5.0] - 2026-07-13
 ### Added
-- `foura_proxy` accepts an optional `exitCountries` allowlist and returns the last-synced `exitCountry` on a scoped success. Unknown exits are excluded and no eligible scope is silently dropped.
+- `foura_proxy` accepts an optional `exitCountries` allowlist and returns the selected `exitCountry` on a scoped success. Unknown exits are excluded and no eligible scope is silently dropped.
+### Changed
+- Tool guidance now makes protected-content validation, offloaded resource reads, and strict country-scope error handling explicit.
 
 ## [0.4.8] - 2026-07-02
 ### Security
-- The HTTP transport no longer falls back to the server's `FOURA_API_KEY` environment variable
-  when a request arrives without a key. Each HTTP request must carry its own
-  `Authorization: Bearer pk_live_...`; the env var is honoured only in stdio mode. This prevents
-  an unauthenticated request from ever borrowing the host operator's key.
-- Bumped the transitive `qs` dependency to 6.15.3, clearing a denial-of-service advisory. No API
-  change.
+- The HTTP transport now requires credentials on each request. Stdio mode continues to read
+  `FOURA_API_KEY` from the environment.
+- Updated dependencies to clear a denial-of-service advisory. No API change.
 - The HTTP server no longer emits the `X-Powered-By` response header.
 ### Changed
 - Minimum supported Node is now 22 LTS (was 20, which has reached end-of-life). Node 22 and 24 are
@@ -21,8 +20,7 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 
 ## [0.4.7] - 2026-07-01
 ### Changed
-- Raised the tool-schema token budget 10000 -> 11000 to fit the now fully-described input
-  parameters (internal build check only; no runtime change).
+- Completed the expanded tool-schema descriptions. No runtime change.
 
 ## [0.4.6] - 2026-07-01
 ### Changed
@@ -46,9 +44,7 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 
 ## [0.4.3] - 2026-07-01
 ### Fixed
-- 401 `WWW-Authenticate` is now a plain Bearer challenge (dropped the RFC 9728 `resource_metadata`
-  hint). It advertised an OAuth flow the server does not implement, which made MCP gateways loop
-  trying to authorize instead of sending the API key.
+- 401 responses now use a Bearer challenge that matches the server's API-key authentication.
 
 ## [0.4.2] - 2026-07-01
 ### Changed
@@ -79,9 +75,8 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 
 ## [0.3.2] - 2026-07-01
 ### Changed
-- The package now builds and publishes from the public GitHub repository with npm provenance.
-  Runtime behaviour is unchanged from 0.3.1; internal-only code comments and helper names were
-  cleaned up for the public source.
+- The package now builds and publishes from the public GitHub repository with npm provenance and
+  verified source links. Runtime behaviour is unchanged from 0.3.1.
 
 ## [0.3.1] - 2026-07-01
 ### Changed

@@ -1,17 +1,10 @@
-// Discovery surfaces for the hosted server (mcp.foura.ai).
-//
-// The human-facing landing lives on the main site at https://foura.ai/mcp
-// (a real page with the site chrome, theme, and i18n). This host is the MCP
-// endpoint; a browser hitting the bare root is redirected there (the reverse
-// proxy also does this at the edge). We keep the machine-readable llms.txt here
-// because mcp.foura.ai is a separate host and crawlers hitting
-// mcp.foura.ai/llms.txt should find a map without following the redirect.
+// Human visitors get the product page; MCP-aware crawlers get a local llms.txt index.
 
 export const LANDING_REDIRECT = "https://foura.ai/mcp";
 
 export const LLMS_TXT = `# FourA MCP server
 
-> The FourA web scraping API as a Model Context Protocol (MCP) server. One smart tool fetches any public web page - direct request, rotating proxy, or full browser - and gets past anti-bot challenges. Four tools, six prompts, one API key. Hosted at https://mcp.foura.ai/mcp (Streamable HTTP) and on npm as @fouradata/mcp (local stdio).
+> Reliable web access for AI agents. Give FourA a public URL and get the content back through smart HTTP, rotating proxies, or a full browser. Four tools, six prompts, one API key. Hosted at https://mcp.foura.ai/mcp (Streamable HTTP) and on npm as @fouradata/mcp (local stdio).
 
 ## Connect
 - Hosted (Streamable HTTP): POST https://mcp.foura.ai/mcp with header "Authorization: Bearer pk_live_..."
@@ -22,7 +15,7 @@ export const LLMS_TXT = `# FourA MCP server
 ## Tools
 - foura_auto: smart fetch, picks direct / proxy / browser for you (the default)
 - foura_single: one fast HTTP request (static pages, JSON APIs)
-- foura_proxy: rotating proxy pool with retry (bypass WAF challenges)
+- foura_proxy: rotating proxies with retry for blocked or geo-specific pages
 - foura_browser: full browser session with JavaScript rendering
 
 ## Prompts

@@ -7,7 +7,7 @@ body:
     attributes:
       label: Package version
       description: Output of `npm view @fouradata/mcp version`, or your installed version.
-      placeholder: "0.4.0"
+      placeholder: "x.y.z"
     validations:
       required: true
   - type: dropdown

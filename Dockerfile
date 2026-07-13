@@ -9,8 +9,8 @@ RUN npm run build
 
 FROM node:24-slim
 
-# Audit 1.4 — install curl as root, then drop to a dedicated non-root user.
-# Defense-in-depth: any post-build container compromise stays out of uid 0.
+# Install curl for the health check, then drop to a dedicated non-root user.
+# Run the final image as an unprivileged user.
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd -r app --gid 1001 \

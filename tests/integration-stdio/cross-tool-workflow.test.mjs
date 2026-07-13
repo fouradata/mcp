@@ -1,9 +1,6 @@
-// Cross-tool proxy reuse — foura_proxy returns a base36 proxy ID; passing
-// that string to foura_single.proxy OR foura_browser.proxy MUST exit through
-// the same upstream IP. This is the workflow that external Claude/Cursor
-// agents were missing because v0.2.2 schema descriptions didn't make it
-// discoverable. The 0.2.3 release rewrote the field descriptions; this
-// regression test locks in the actual wire behaviour.
+// Cross-tool proxy reuse: foura_proxy returns a base36 proxy ID; passing
+// that string to foura_single.proxy or foura_browser.proxy must reuse
+// the same exit. This regression test locks in the end-to-end behavior.
 import { test, before, after, describe } from "node:test";
 import assert from "node:assert/strict";
 import { startServer } from "./_common.mjs";
@@ -16,7 +13,7 @@ after(async () => { await client?.close(); });
 
 const TWO_MIN = 120_000;
 
-// First two octets of an IPv4 — its /16 network. Used to tell a "same upstream
+// First two octets of an IPv4 - its /16 network. Used to tell a "same upstream
 // exit, anycast low-octet variance" reuse from a genuinely different exit.
 function ipv4Net16(ip) {
   const m = /(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}/.exec(ip || "");
@@ -27,14 +24,14 @@ function firstIpv4(s) {
   return m ? m[1] : null;
 }
 
-describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser same egress", () => {
+describe("Cross-tool workflow - foura_proxy -> foura_single/foura_browser same egress", () => {
   test("1. foura_proxy returns a base36 proxy ID", async () => {
     const r = await client.callTool("foura_proxy", {
       maxTries: 5,
       request: { method: "GET", url: TEST_SITES.ip, unblocker: true, tryJsonData: true },
     }, TWO_MIN);
     if (r.isError) {
-      // Pool nondeterminism — skip downstream cases if the first call failed.
+      // Pool nondeterminism - skip downstream cases if the first call failed.
       globalThis.__crossToolProxy = null;
       return;
     }
@@ -48,7 +45,7 @@ describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser sam
     globalThis.__crossToolProxy = { proxy, origin };
   });
 
-  test("2. foura_single with proxy=<id> → same exit (exact IP, or same /16 for anycast exits)", async (t) => {
+  test("2. foura_single with proxy=<id> -> same exit (exact IP, or same /16 for anycast exits)", async (t) => {
     const ctx = globalThis.__crossToolProxy;
     if (!ctx) return t.skip("previous foura_proxy step skipped");
     const r = await client.callTool("foura_single", {
@@ -59,7 +56,7 @@ describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser sam
       unblocker: true,
     }, TWO_MIN);
     if (r.isError) {
-      // A reused pool exit can die at transport level (handshake / timeout) — a
+      // A reused pool exit can die at transport level (handshake / timeout) - a
       // pool failure, not a reuse-routing failure. Skip like the sibling tests.
       return t.skip(`reused proxy failed at transport: ${r.structuredContent?.error ?? "unknown"}`);
     }
@@ -67,22 +64,22 @@ describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser sam
     const origin = r.structuredContent.data?.origin;
     // The test can only assert "same exit" when it actually OBSERVES the egress IP.
     // If the target didn't echo an IP (httpbin flake / non-JSON), it's inconclusive
-    // — skip rather than fail (a real reuse regression shows up as an OBSERVED
+    // - skip rather than fail (a real reuse regression shows up as an observed
     // different-network egress, which still fails below).
     if (!firstIpv4(origin)) return t.skip(`could not observe egress IP on reuse: ${JSON.stringify(origin)?.slice(0, 120)}`);
     if (origin === ctx.origin) return; // strict proof: byte-exact same exit IP
     // Some pool exits (e.g. Cloudflare WARP) NAT through a whole /16 and vary the
-    // low octets per request — exact-IP can't hold for those. Same /16 still proves
-    // the reuse routed through the SAME upstream exit network (a non-reused draw
+    // low octets per request - exact-IP can't hold for those. Same /16 still proves
+    // the reuse routed through the same upstream exit network (a non-reused draw
     // would be a different ASN entirely). A different network IS a real regression.
     if (ipv4Net16(origin) && ipv4Net16(origin) === ipv4Net16(ctx.origin)) {
-      return t.skip(`reused exit is anycast/WARP-class (${ctx.origin} -> ${origin}, same /16) — exact-IP premise N/A`);
+      return t.skip(`reused exit is anycast/WARP-class (${ctx.origin} -> ${origin}, same /16) - exact-IP premise N/A`);
     }
     assert.equal(origin, ctx.origin,
       `foura_single with proxy=${ctx.proxy} must exit through the same network (${ctx.origin}), got ${origin}`);
   });
 
-  test("3. foura_browser with proxy=<id> → SAME egress IP (the case external Claude got wrong)", async (t) => {
+  test("3. foura_browser with proxy=<id> reuses the same egress", async (t) => {
     const ctx = globalThis.__crossToolProxy;
     if (!ctx) return t.skip("previous foura_proxy step skipped");
     const r = await client.callTool("foura_browser", {
@@ -98,20 +95,20 @@ describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser sam
     const body = r.structuredContent.body;
     const bodyStr = typeof body === "string" ? body : JSON.stringify(body);
     if (bodyStr.includes(ctx.origin)) return; // strict proof: byte-exact same exit IP
-    // Same anycast/WARP allowance as test 2 — compare the egress /16 the browser
+    // Same anycast/WARP allowance as test 2 - compare the egress /16 the browser
     // actually used (parsed from the rendered httpbin/ip JSON).
     const origin = firstIpv4(bodyStr);
     // No IP in the rendered body (httpbin returned HTML / a challenge / didn't echo)
-    // — egress unobservable, inconclusive. Skip rather than fail.
+    // - egress unobservable, inconclusive. Skip rather than fail.
     if (!origin) return t.skip(`browser body had no parseable egress IP (target/render flake): ${bodyStr.slice(0, 120)}`);
     if (ipv4Net16(origin) && ipv4Net16(origin) === ipv4Net16(ctx.origin)) {
-      return t.skip(`reused exit is anycast/WARP-class (${ctx.origin} -> ${origin}, same /16) — exact-IP premise N/A`);
+      return t.skip(`reused exit is anycast/WARP-class (${ctx.origin} -> ${origin}, same /16) - exact-IP premise N/A`);
     }
     assert.ok(bodyStr.includes(ctx.origin),
       `foura_browser with proxy=${ctx.proxy} must exit through ${ctx.origin}'s network; got ${origin ?? bodyStr.slice(0, 200)}`);
   });
 
-  test("4. foura_proxy can also rotate AWAY from a known-bad ID via ignoreProxies", async (t) => {
+  test("4. foura_proxy can choose a different route via ignoreProxies", async (t) => {
     const ctx = globalThis.__crossToolProxy;
     if (!ctx) return t.skip("previous foura_proxy step skipped");
     const r = await client.callTool("foura_proxy", {
@@ -137,10 +134,10 @@ describe("Cross-tool workflow — foura_proxy → foura_single/foura_browser sam
     // Strict zod parse will reject unknown fields with isError; if it ever
     // starts passing, someone reintroduced the field.
     if (!r.isError) {
-      // zod by default strips unknown keys silently — that's also acceptable
-      // (the field is simply dropped, can't cause a no-op trap). What MUST
+      // zod by default strips unknown keys silently - that's also acceptable
+      // (the field is simply dropped, so it can't cause a no-op trap). What must
       // fail is: the response treats proxyId as a real instruction. Verify
-      // egress is the DEFAULT container egress IP, not the imaginary id.
+      // egress is the default route, not the unknown proxy id.
       const r2 = await client.callTool("foura_single", {
         method: "GET", url: TEST_SITES.ip, tryJsonData: true, unblocker: true,
       }, TWO_MIN);

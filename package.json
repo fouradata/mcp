@@ -1,8 +1,8 @@
 {
   "name": "@fouradata/mcp",
   "mcpName": "ai.foura/mcp",
-  "version": "0.4.8",
-  "description": "MCP server for the FourA web scraping API - four tools (smart auto-fetch, HTTP request, rotating proxies, full browser) plus six prompts, usable from any MCP client.",
+  "version": "0.5.0",
+  "description": "Web access for AI agents - smart HTTP, rotating proxy, and full-browser tools plus six ready-made workflows.",
   "type": "module",
   "main": "dist/server.js",
   "bin": {
@@ -22,15 +22,20 @@
     "test": "npm run build && npm run test:unit && npm run test:integration:stdio && npm run test:docs",
     "test:unit": "node --test --test-reporter=spec 'tests/unit/**/*.test.mjs'",
     "test:integration:stdio": "node --test --test-concurrency=1 --test-reporter=spec 'tests/integration-stdio/**/*.test.mjs'",
+    "test:integration:stdio:mocked": "node --test --test-concurrency=1 --test-reporter=spec tests/integration-stdio/proxy-exit-country-contract.test.mjs tests/integration-stdio/tool-guidance-contract.test.mjs",
     "test:integration:http": "node --test --test-reporter=spec 'tests/integration-http/**/*.test.mjs'",
     "test:docs": "node --test --test-reporter=spec 'tests/docs-compliance/**/*.test.mjs'",
+    "test:syntax": "node scripts/check-test-syntax.mjs",
+    "test:ci": "npm run lint && npm run build && npm run test:unit && npm run test:integration:stdio:mocked && npm run test:docs && npm run test:syntax && npm run audit:tokens && npm run audit:package",
     "test:all": "npm run test && npm run test:integration:http",
     "smoke": "node tests/smoke.mjs",
     "inspector": "npx -y @modelcontextprotocol/inspector tsx src/stdio.ts",
     "lint": "tsc --noEmit",
+    "audit:package": "node scripts/audit-package.mjs",
     "audit:tokens": "node scripts/audit-tokens.mjs",
     "bump": "node scripts/bump.mjs",
-    "prepublishOnly": "npm run lint && npm run build"
+    "verify:release": "node scripts/verify-release-tag.mjs",
+    "prepublishOnly": "npm run test:ci"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -41,8 +46,12 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.2",
-    "tsx": "^4.22.4",
+    "tsx": "^4.23.1",
     "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
   },
   "engines": {
     "node": ">=22.11.0"

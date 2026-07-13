@@ -11,7 +11,7 @@ before(async () => {
   await client.initialize();
 });
 
-describe("mcp.foura.ai tools/call — smoke against deployed", () => {
+describe("mcp.foura.ai tools/call - smoke against deployed", () => {
   test("1. foura_single GET example.com", async () => {
     const r = await client.callTool("foura_single", { method: "GET", url: "https://example.com" });
     assert.notEqual(r.isError, true, `got error: ${JSON.stringify(r).slice(0, 300)}`);

@@ -8,8 +8,8 @@
 
 ## Testing
 
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes
+- [ ] `npm run test:ci` passes
+- [ ] Live integration tests run when execution behavior changed
 - [ ] Docs updated if a tool, prompt, or error code changed
 - [ ] ASCII hyphens only, accurate tool and prompt counts
 

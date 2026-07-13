@@ -4,11 +4,11 @@ import { withApiKey, getApiKey } from "../../dist/auth.js";
 
 // Regression guard for the HTTP key-isolation fix (0.4.8). The invariant:
 // while inside a withApiKey() request scope (the HTTP transport path), the
-// request-scoped value is authoritative - getApiKey() must NEVER fall back to
+// The request-scoped value is authoritative; getApiKey() must not fall back to
 // the process env, or an unauthenticated HTTP request could borrow the host
 // operator's FOURA_API_KEY. The env fallback exists strictly for stdio mode,
 // where there is no request scope at all.
-describe("auth — getApiKey() request-scope isolation", () => {
+describe("auth - getApiKey() request-scope isolation", () => {
   let savedEnv;
   before(() => { savedEnv = process.env.FOURA_API_KEY; });
   after(() => {

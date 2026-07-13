@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// End-to-end smoke — initialize + tools/list + tools/call against live FourA API.
+// End-to-end smoke - initialize + tools/list + tools/call against live FourA API.
 // Run: FOURA_API_KEY=pk_live_... node tests/smoke.mjs
 
 import { spawn } from "node:child_process";
@@ -64,9 +64,9 @@ async function call(name, args, timeoutMs) {
 let failed = 0;
 function assert(label, cond, detail = "") {
   if (cond) {
-    console.log(`  ✓ ${label}`);
+    console.log(`  PASS ${label}`);
   } else {
-    console.log(`  ✗ ${label}${detail ? `\n    ${detail}` : ""}`);
+    console.log(`  FAIL ${label}${detail ? `\n    ${detail}` : ""}`);
     failed++;
   }
 }
@@ -92,14 +92,14 @@ async function main() {
   assert("foura_proxy present", names.includes("foura_proxy"));
   assert("foura_browser present", names.includes("foura_browser"));
 
-  console.log("\n[3] tools/call foura_single → httpbin.org/headers");
+  console.log("\n[3] tools/call foura_single -> httpbin.org/headers");
   const single = await call(
     "foura_single",
     { method: "GET", url: "https://httpbin.org/headers", unblocker: true },
     30_000,
   );
   if (single.isError) {
-    console.log(`  ✗ tool error: ${single.text.slice(0, 200)}`);
+    console.log(`  FAIL tool error: ${single.text.slice(0, 200)}`);
     failed++;
   } else {
     const parsed = single.structuredContent;
@@ -108,14 +108,14 @@ async function main() {
     assert("data contains httpbin", String(parsed.data).includes("httpbin"));
   }
 
-  console.log("\n[4] tools/call foura_proxy → httpbin.org/ip (maxTries:2)");
+  console.log("\n[4] tools/call foura_proxy -> httpbin.org/ip (maxTries:2)");
   const proxy = await call(
     "foura_proxy",
     { maxTries: 2, request: { method: "GET", url: "https://httpbin.org/ip", unblocker: true } },
     60_000,
   );
   if (proxy.isError) {
-    console.log(`  ✗ tool error: ${proxy.text.slice(0, 200)}`);
+    console.log(`  FAIL tool error: ${proxy.text.slice(0, 200)}`);
     failed++;
   } else {
     const parsed = proxy.structuredContent;
@@ -124,14 +124,14 @@ async function main() {
     assert("total attempts field present", typeof parsed.total === "number");
   }
 
-  console.log("\n[5] tools/call foura_browser → example.com (timeout 20s)");
+  console.log("\n[5] tools/call foura_browser -> example.com (timeout 20s)");
   const browser = await call(
     "foura_browser",
     { url: "https://example.com", timeout_ms: 20_000 },
     60_000,
   );
   if (browser.isError) {
-    console.log(`  ✗ tool error: ${browser.text.slice(0, 200)}`);
+    console.log(`  FAIL tool error: ${browser.text.slice(0, 200)}`);
     failed++;
   } else {
     const parsed = browser.structuredContent;
@@ -140,16 +140,16 @@ async function main() {
     assert("userAgent present", typeof parsed.userAgent === "string");
   }
 
-  console.log("\n[6] error path — invalid url should reject at validation");
+  console.log("\n[6] error path - invalid url should reject at validation");
   const bad = await call("foura_single", { method: "GET", url: "not-a-url" });
   assert("validation error returned", bad.isError, bad.text.slice(0, 200));
 
   child.kill();
   if (failed > 0) {
-    console.log(`\n❌ ${failed} assertion(s) failed`);
+    console.log(`\nFAIL: ${failed} assertion(s) failed`);
     process.exit(1);
   }
-  console.log("\n✅ all assertions passed");
+  console.log("\nPASS: all assertions passed");
   process.exit(0);
 }
 

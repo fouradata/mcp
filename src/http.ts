@@ -6,25 +6,9 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.4.8";
+const SERVER_VERSION = "0.5.0";
 
-// Spec MUSTs covered in this file:
-//   Origin + Host validation (CVE-2025-66414 DNS rebinding)
-//   WWW-Authenticate on 401
-//   MCP-Protocol-Version validation (delegated to SDK's list)
-//   body size cap (256 KB)
-//   server + request timeout
-//   SIGTERM graceful shutdown
-
-// MCP-Protocol-Version allowlist is DERIVED from the SDK at runtime, not
-// hardcoded here. Reason: hardcoding froze us at 2025-06-18 / 2025-03-26
-// and broke every newer client (Claude Code 2.1.141 sends 2025-11-25)
-// until we shipped a release. By reading the SDK's exported authoritative
-// list, every `npm update @modelcontextprotocol/sdk` automatically widens
-// our supported set - no source-code change, no release coupling.
-//
-// SUPPORTED_PROTOCOL_VERSIONS for @modelcontextprotocol/sdk@1.29.0:
-//   ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05', '2024-10-07']
+// Read protocol versions from the SDK so client compatibility tracks dependency updates.
 
 function parseList(env: string | undefined, defaults: string[]): string[] {
   const raw = (env ?? "").trim();
@@ -32,9 +16,7 @@ function parseList(env: string | undefined, defaults: string[]): string[] {
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-// Default allowlist matches production deployment (mcp.foura.ai) +
-// local development. Override with FOURA_MCP_ALLOWED_HOSTS / _ORIGINS for
-// self-hosters or staging environments.
+// Defaults cover the hosted endpoint and local development. Self-hosters can override them.
 const ALLOWED_HOSTS = new Set(parseList(
   process.env.FOURA_MCP_ALLOWED_HOSTS,
   ["mcp.foura.ai", "localhost", "127.0.0.1", "[::1]"],
@@ -51,16 +33,13 @@ const ALLOWED_ORIGINS = new Set(parseList(
 
 const app = express();
 
-// Don't advertise the framework (removes the default `X-Powered-By: Express`
-// response header). Minor fingerprinting-reduction; no behavioural change.
+// Suppress Express's default response header.
 app.disable("x-powered-by");
 
-// cap body size at 256 KB. Real MCP request payloads are <4 KB.
-// Helps mitigate slow-body DoS + memory-exhaustion attacks.
+// Keep incoming MCP payloads bounded.
 app.use(express.json({ limit: "256kb" }));
 
-// Origin + Host validation BEFORE the body is parsed for the MCP
-// path. /healthz stays open so probes can hit it from any source.
+// Validate the MCP endpoint's Host and optional Origin headers.
 function jsonRpcError(res: Response, status: number, code: number, message: string, extraHeaders?: Record<string, string>) {
   if (extraHeaders) for (const [k, v] of Object.entries(extraHeaders)) res.setHeader(k, v);
   res.status(status).json({
@@ -71,8 +50,7 @@ function jsonRpcError(res: Response, status: number, code: number, message: stri
 }
 
 function validateOriginAndHost(req: Request, res: Response, next: NextFunction): void {
-  // Host header - defends against DNS-rebinding (attacker's DNS resolves
-  // their hostname to a loopback IP, but Host header carries their hostname).
+  // Match the request hostname against the configured list.
   const hostHeader = (req.headers.host ?? "").toString();
   if (!hostHeader) {
     jsonRpcError(res, 403, -32000, "Missing Host header");
@@ -92,10 +70,7 @@ function validateOriginAndHost(req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  // Origin - browser-only; server-to-server callers (curl, MCP clients in
-  // stdio bridge mode) omit it, which is per-spec acceptable. When PRESENT,
-  // it MUST match the allowlist (prevents cross-origin JS from a malicious
-  // page driving an authenticated MCP session).
+  // Browser requests include Origin; server-to-server clients can omit it.
   const origin = req.headers.origin;
   if (typeof origin === "string" && origin.length > 0) {
     if (!ALLOWED_ORIGINS.has(origin)) {
@@ -107,11 +82,7 @@ function validateOriginAndHost(req: Request, res: Response, next: NextFunction):
   next();
 }
 
-// MCP-Protocol-Version header validation. Allowlist comes from
-// the SDK's authoritative `SUPPORTED_PROTOCOL_VERSIONS` export so we track
-// upstream automatically. Per spec: when the header is absent, accept
-// (backwards-compat). When present and unknown → 400 with the supported list
-// in the error message so client implementations can self-diagnose.
+// Accept versions advertised by the installed SDK. The header is optional in the MCP spec.
 function validateProtocolVersion(req: Request, res: Response, next: NextFunction): void {
   const raw = req.header("mcp-protocol-version");
   if (!raw) {
@@ -134,11 +105,7 @@ app.get("/healthz", (_req, res) => {
   res.json({ ok: true, name: "foura-mcp", version: SERVER_VERSION });
 });
 
-// Public discovery surfaces (no auth, no Origin/Host gate - like /healthz).
-// The human landing lives at foura.ai/mcp, so a browser hitting the bare root
-// is redirected there (301 = permanent, consolidates SEO onto the one page).
-// llms.txt stays here: mcp.foura.ai is a separate host, so crawlers hitting
-// mcp.foura.ai/llms.txt should find a map without following the redirect.
+// Keep public discovery on this host and send human visitors to the product page.
 app.get("/", (_req, res) => {
   res.redirect(301, LANDING_REDIRECT);
 });
@@ -149,8 +116,7 @@ app.get("/llms.txt", (_req, res) => {
 function extractBearer(req: Request): string | null {
   const auth = req.header("authorization");
   if (auth) {
-    // "Authorization: Bearer <key>", or a bare "Authorization: <key>" for MCP
-    // gateways that forward the raw key without the Bearer prefix.
+    // Accept either a Bearer token or a bare key for clients that forward it unchanged.
     return auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : auth.trim();
   }
   const xKey = req.header("x-api-key");
@@ -158,15 +124,10 @@ function extractBearer(req: Request): string | null {
   return null;
 }
 
-// emit WWW-Authenticate on 401 so clients send a bearer token. Intentionally a PLAIN
-// Bearer challenge with NO `resource_metadata` (RFC 9728): we are API-key auth only for
-// now, and advertising OAuth resource metadata makes gateways (e.g. Smithery) attempt an
-// OAuth flow the server does not implement yet, which loops. Re-add when the OAuth AS ships (Phase 4).
+// Emit a minimal Bearer challenge so clients can send an API key.
 const WWW_AUTHENTICATE = 'Bearer realm="foura-mcp"';
 
-// Capability discovery (initialize, */list, prompts/get, ping) is PUBLIC: any client or
-// registry can enumerate the tools/prompts before a user provides a key. Only methods that
-// touch the tenant's account require the key - tool execution and reading offloaded payloads.
+// Discovery is public. Tool execution and resource reads require an API key.
 const KEY_REQUIRED_METHODS = new Set(["tools/call", "resources/read"]);
 
 app.post(
@@ -223,15 +184,11 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.error(`[foura-mcp] HTTP listening on :${PORT}`);
 });
 
-// bound how long an incoming HTTP request can hold a socket open.
-// Defends against slowloris-style attacks (open POST that never finishes
-// sending the body).
+// Bound the lifetime of incoming requests.
 server.setTimeout(60_000);
 server.requestTimeout = 30_000;
 
-// graceful shutdown. On SIGTERM, stop accepting new connections,
-// let in-flight requests finish (up to 30s), then exit. docker-compose's
-// stop_grace_period must be >= this hard cap.
+// Stop accepting new work, drain active requests, then exit.
 function shutdown(signal: string): void {
   console.error(`[foura-mcp] received ${signal}, draining...`);
   server.close((err) => {

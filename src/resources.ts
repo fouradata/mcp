@@ -9,20 +9,8 @@ import {
 import { getApiKey } from "./auth.js";
 
 /**
- * Resources - offload large response bodies (>= THRESHOLD bytes) onto host
- * disk and return a MCP resource_link instead of inlining megabytes into the
- * LLM context.
- *
- * Transport-level cross-cutting concern (same carve-out as auth.ts and
- * safe-target.ts). Per-tool product code stays per-file: each tool decides
- * which response field is the "large payload" (single/proxy use `data`,
- * browser uses `body`).
- *
- * tenant isolation. Payloads are stored under
- * `<PAYLOADS_DIR>/<keyhash>/<uuid>.{bin,meta.json}`, where `keyhash` is the
- * first 16 hex chars of sha256(apiKey). The resource handler validates the
- * caller's keyhash matches the storage path before serving - any other
- * tenant gets a `resource not found` (no leaking whether the UUID exists).
+ * Store large response bodies outside the MCP context and return a resource link.
+ * Each API key gets a separate storage namespace.
  */
 
 export const THRESHOLD_BYTES = 50_000;
@@ -48,9 +36,7 @@ export interface StoredPayload {
   size: number;
 }
 
-// sha256(apiKey).hex().slice(0, 16) - gives 64 bits of namespacing entropy,
-// short enough for a filesystem path component and unguessable for an
-// attacker who doesn't have the corresponding API key.
+// Derive a fixed-length namespace without storing the API key itself.
 export function hashApiKey(apiKey: string): string {
   return createHash("sha256").update(apiKey).digest("hex").slice(0, 16);
 }
@@ -117,8 +103,8 @@ export function registerResourceHandler(server: McpServer): void {
       title: "Cached foura-mcp response payload",
       description:
         "A large response body (>=50KB) returned by an earlier foura-mcp tool call, " +
-        "stored on disk for follow-up reads instead of inlined into context. " +
-        "Tenant-isolated: only the API key that stored the payload can read it back.",
+        "available for follow-up reads instead of inlined into context. " +
+        "Only the API key that created the resource can read it.",
     },
     async (uri, { uuid }) => {
       const uuidStr = Array.isArray(uuid) ? uuid[0] : uuid;
@@ -126,8 +112,7 @@ export function registerResourceHandler(server: McpServer): void {
         throw new Error(`Payload not found: ${uuidStr}`);
       }
 
-      // Resolve the caller's tenant namespace and read ONLY from there.
-      // Cross-tenant reads bubble up as plain ENOENT (don't leak existence).
+      // Resolve the caller's namespace before reading the payload.
       const keyhash = hashApiKey(getApiKey());
       if (!SAFE_KEYHASH.test(keyhash)) {
         throw new Error("Payload not found");
@@ -143,8 +128,7 @@ export function registerResourceHandler(server: McpServer): void {
         throw new Error(`Payload not found: ${uuidStr}`);
       }
       const meta = JSON.parse(metaRaw) as PayloadMeta;
-      // Defense in depth - even if filesystem permissions ever got bypassed,
-      // the meta sidecar carries the keyhash; reject on mismatch.
+      // The metadata namespace must match the current caller.
       if (meta.keyhash !== keyhash) {
         throw new Error(`Payload not found: ${uuidStr}`);
       }

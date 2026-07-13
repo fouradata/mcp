@@ -6,7 +6,7 @@ let client;
 before(async () => { client = await startServer(); });
 after(async () => { await client?.close(); });
 
-describe("MCP Prompts — registration + argument plumbing", () => {
+describe("MCP Prompts - registration + argument plumbing", () => {
   test("1. prompts/list returns exactly 6 named prompts", async () => {
     const prompts = await client.listPrompts();
     const names = prompts.map((p) => p.name).sort();

@@ -31,7 +31,7 @@ describe("mcp.foura.ai /healthz", () => {
     assert.ok(typeof body.version === "string");
     assert.match(body.version, /^\d+\.\d+\.\d+/);
     if (body.version !== pkg.version) {
-      console.warn(`  ⚠ deployed ${body.version} != package.json ${pkg.version} (expected pre-deploy)`);
+      console.warn(`  WARNING: deployed ${body.version} != package.json ${pkg.version} (expected pre-deploy)`);
     }
   });
 
@@ -39,6 +39,6 @@ describe("mcp.foura.ai /healthz", () => {
     const t0 = Date.now();
     await request(HEALTH);
     const elapsed = Date.now() - t0;
-    assert.ok(elapsed < 5000, `healthz took ${elapsed}ms — too slow`);
+    assert.ok(elapsed < 5000, `healthz took ${elapsed}ms - too slow`);
   });
 });

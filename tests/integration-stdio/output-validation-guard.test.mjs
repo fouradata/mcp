@@ -1,5 +1,5 @@
-// regression regression — output validation crashes produce structured envelope,
-// NOT bare "Tool execution failed". We start a local mock the upstream API-api on a
+// Output-validation regressions must produce a structured envelope,
+// not a bare "Tool execution failed". We start a local mock API on a
 // random port that returns deliberately malformed responses, point foura-mcp
 // at it via FOURA_API_BASE, and assert every malformed shape gets converted.
 
@@ -36,14 +36,14 @@ after(async () => {
   await new Promise((r) => mock.close(r));
 });
 
-describe("regression regression — output validation guard converts crashes to envelope", () => {
-  test("1. single — malformed headers (string instead of array) survives as envelope or success", async () => {
+describe("output validation guard converts crashes to an envelope", () => {
+  test("1. single - malformed headers (string instead of array) survives as envelope or success", async () => {
     nextResponse = { status: 200, headers: "this-is-not-an-array", data: "hi" };
     const r = await client.callTool("foura_single", {
       method: "GET", url: "https://example.com",
     }, 30_000);
-    // Either: schema is permissive enough (headers union accepts string) → success
-    // Or: validation crashed → output_validation_failed envelope
+    // Either: schema is permissive enough (headers union accepts string) -> success
+    // Or: validation crashed -> output_validation_failed envelope
     if (r.isError) {
       assertEnvelope(r, "single");
     } else {
@@ -51,7 +51,7 @@ describe("regression regression — output validation guard converts crashes to 
     }
   });
 
-  test("2. single — invalid total_time type (object) → either accepted or guarded", async () => {
+  test("2. single - invalid total_time type (object) -> either accepted or guarded", async () => {
     nextResponse = { status: 200, headers: [], data: "x", total_time: { weird: true } };
     const r = await client.callTool("foura_single", {
       method: "GET", url: "https://example.com",
@@ -62,17 +62,17 @@ describe("regression regression — output validation guard converts crashes to 
     }
   });
 
-  test("3. single — completely garbage response shape → guarded", async () => {
+  test("3. single - completely garbage response shape -> guarded", async () => {
     nextResponse = { random_garbage: true, no_status: "yes" };
     const r = await client.callTool("foura_single", {
       method: "GET", url: "https://example.com",
     }, 30_000);
     // Even with garbage shape, foura-mcp's pass-through accepts extra fields.
-    // No crash → success path. The point is NO bare "Tool execution failed".
+    // No crash -> success path. The point is NO bare "Tool execution failed".
     assert.ok(typeof r === "object", "must return object, not throw");
   });
 
-  test("4. single — body.error triggers regression path, not output validation", async () => {
+  test("4. single - body.error triggers regression path, not output validation", async () => {
     nextResponse = { status: 0, data: "", total_time: 0, error: "Connection refused" };
     const r = await client.callTool("foura_single", {
       method: "GET", url: "https://example.com",
@@ -82,7 +82,7 @@ describe("regression regression — output validation guard converts crashes to 
     assert.match(r.structuredContent.error, /Connection refused/);
   });
 
-  test("5. proxy — body.error from PrResponseError shape (regression)", async () => {
+  test("5. proxy - body.error from PrResponseError shape (regression)", async () => {
     nextResponse = {
       error: "Download maxTry limit reached",
       request: { request: { method: "GET", url: "https://example.com" } },
@@ -97,7 +97,7 @@ describe("regression regression — output validation guard converts crashes to 
     assert.match(r.structuredContent.error, /maxTry limit/i);
   });
 
-  test("6. browser — body.error from DwResponseError shape", async () => {
+  test("6. browser error body becomes a structured envelope", async () => {
     nextResponse = { error: "Navigation timeout of 30000 ms exceeded", status: 0 };
     const r = await client.callTool("foura_browser", {
       url: "https://example.com",
@@ -107,7 +107,7 @@ describe("regression regression — output validation guard converts crashes to 
     assert.match(r.structuredContent.error, /Navigation timeout/);
   });
 
-  test("7. non-2xx HTTP status from gateway → upstream_non_json or deriveCode envelope", async () => {
+  test("7. non-2xx HTTP status from gateway -> upstream_non_json or deriveCode envelope", async () => {
     statusOverride = 502;
     nextResponse = { error: "Bad Gateway" };
     const r = await client.callTool("foura_single", {

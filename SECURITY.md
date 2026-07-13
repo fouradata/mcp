@@ -1,28 +1,19 @@
-# Security Policy
+# Security
 
-## Reporting a vulnerability
+Please report suspected vulnerabilities privately to **security@foura.ai**. Don't open a public
+issue or discussion with technical details.
 
-Email **security@foura.ai**. Please do not open a public issue for security reports.
+Include:
 
-Include the affected version, reproduction steps, and the impact you observed. We acknowledge
-reports within 72 hours and aim to ship a fix for high or critical issues within 14 days.
+- the affected package version;
+- clear reproduction steps;
+- the impact you observed;
+- any logs or request samples with credentials removed.
 
-## Scope
+Only the latest version published on npm is supported. Please upgrade before reporting an issue
+that affects an older release.
 
-This repository is the MCP wrapper (`@fouradata/mcp`) - the protocol layer over the FourA REST
-API. In scope: the tool surface, input handling (URLs, headers, request bodies), the stdio and
-Streamable HTTP transports, the SSRF target guard, and the on-disk payload cache. Vulnerabilities
-in the FourA API itself also go to security@foura.ai.
+Reports about either `@fouradata/mcp` or the FourA API can use the same address. We'll coordinate
+disclosure with the reporter after the issue has been investigated and fixed.
 
-## Supported versions
-
-Only the latest version published on npm is supported. Please upgrade before reporting.
-
-## Disclosure
-
-We credit reporters in the release notes by default. We ask for coordinated disclosure of up to
-90 days from the fix shipping before public technical detail.
-
----
-
-FourA web scraping API: https://foura.ai  ·  MCP server page: https://foura.ai/mcp  ·  Docs: https://foura.ai/docs/mcp/server
+FourA: https://foura.ai | MCP server: https://foura.ai/mcp

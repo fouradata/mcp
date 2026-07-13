@@ -2,7 +2,7 @@ blank_issues_enabled: true
 contact_links:
   - name: Security vulnerability
     url: https://github.com/fouradata/mcp/security/policy
-    about: Do not open a public issue for security reports. See the security policy (security@foura.ai).
+    about: Don't open a public issue for security reports. See the security policy (security@foura.ai).
   - name: Documentation
     url: https://foura.ai/docs/mcp/server
     about: Tool reference, recipes, and error codes.

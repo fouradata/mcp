@@ -12,6 +12,7 @@ export const STABLE_CODES = new Set([
   "upstream_error",
   "upstream_client_error",
   "upstream_unknown",
+  "no_eligible_proxy",
   "ssrf_blocked",
   "upstream_non_json",
   "output_validation_failed",
@@ -43,7 +44,7 @@ export function getResourceLink(result) {
 }
 
 export function extractSetCookies(headersArr) {
-  // headersArr is header array . Each entry has header name → string | string[].
+  // Each header-array entry maps a name to a string or an array of strings.
   const out = [];
   for (const h of headersArr ?? []) {
     if (h && typeof h === "object") {

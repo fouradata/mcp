@@ -7,7 +7,7 @@ import { __test as browserTest } from "../../dist/tools/browser.js";
 export const single = {
   inputSchema: z.object(singleTest.singleInputShape),
   outputSchema: z.object(singleTest.singleOutputShape),
-  headerInfoSchema: singleTest.ResponseHeadersSchema,
+  responseHeadersSchema: singleTest.ResponseHeadersSchema,
   deriveCode: singleTest.deriveCode,
 };
 
@@ -15,7 +15,7 @@ export const proxy = {
   inputSchema: z.object(proxyTest.proxyInputShape),
   outputSchema: z.object(proxyTest.proxyOutputShape),
   innerRequestSchema: proxyTest.ProxyInnerRequestSchema,
-  headerInfoSchema: proxyTest.ProxyResponseHeadersSchema,
+  responseHeadersSchema: proxyTest.ProxyResponseHeadersSchema,
   deriveCode: proxyTest.deriveCode,
 };
 
