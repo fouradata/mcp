@@ -211,7 +211,7 @@ export function registerPrompts(server: McpServer): void {
               (must_contain
                 ? `Pass validate.data.accept:["${must_contain}"] so only the real page containing "${must_contain}" counts as success. Auto makes bounded attempts and returns an error if none satisfies the validation.\n\n`
                 : `If the first response looks like a challenge / block page rather than real content, re-call with validate.data.accept:["<a string the real page must contain>"] so auto knows what success looks like.\n\n`) +
-              `The response includes completion details and a session ({proxy, cookies, userAgent}). For more pages from the same site, pass session.proxy into the proxy field of foura_single or foura_proxy.\n\n` +
+              `The response includes completion details and a session ({proxy, cookies, userAgent}). For a plain follow-up, call foura_single with session.proxy as proxy, session.userAgent as a User-Agent header, and session.cookies serialized as a Cookie header. For JavaScript, pass the session values to the matching foura_browser fields.\n\n` +
               (extract
                 ? `From the returned content, extract: ${extract}. Return the result as JSON.`
                 : `Return the fetched content (or a concise summary of it, if it is large).`),

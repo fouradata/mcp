@@ -34,6 +34,30 @@ describe("tools/list workflow guidance", () => {
     assert.doesNotMatch(text, /until the real page/i);
   });
 
+  test("Auto session guidance explains plain and browser replay", async () => {
+    const auto = tools.find((tool) => tool.name === "foura_auto");
+    const sessionDescription = auto?.outputSchema?.properties?.session?.description ?? "";
+    assert.match(sessionDescription, /foura_single/);
+    assert.match(sessionDescription, /Cookie header/);
+    assert.match(sessionDescription, /User-Agent header/);
+    assert.match(sessionDescription, /foura_browser/);
+
+    const prompt = await client.getPrompt("smart_fetch", { url: "https://example.com" });
+    const text = prompt.messages[0].content.text;
+    assert.match(text, /foura_single/);
+    assert.match(text, /Cookie header/);
+    assert.match(text, /User-Agent header/);
+    assert.match(text, /foura_browser/);
+  });
+
+  test("every auth_failed code points to the FourA API key", () => {
+    for (const tool of tools) {
+      const codeDescription = tool.outputSchema?.properties?.code?.description ?? "";
+      assert.match(codeDescription, /auth_failed.*FourA API key/i, `${tool.name} auth guidance`);
+      assert.match(codeDescription, /not target-site credentials/i, `${tool.name} credential boundary`);
+    }
+  });
+
   test("every offload path names the standard resource read operation", () => {
     for (const tool of tools) {
       const inputDescription = tool.inputSchema?.properties?.offload_large?.description ?? "";

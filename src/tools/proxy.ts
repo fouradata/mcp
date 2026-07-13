@@ -222,7 +222,7 @@ const proxyOutputShape = {
     })
     .optional()
     .describe("Structured no_eligible_proxy context containing the normalized requested country scope. Preserve this scope and retry later. Do not propose or perform an unscoped fallback; change it only after the user explicitly changes the requirement."),
-  code: z.string().optional().describe("Stable error code for retry classification. no_eligible_proxy means the strict exitCountries scope had no match. Keep that scope and retry later; do not propose or perform an unscoped fallback."),
+  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. no_eligible_proxy means the strict exitCountries scope had no match. Keep that scope and retry later; do not propose or perform an unscoped fallback."),
 };
 
 const proxyInputShape = {
@@ -256,7 +256,7 @@ const proxyInputShape = {
     .min(1)
     .transform((countries) => [...new Set(countries)])
     .optional()
-    .describe("Optional target-visible proxy countries as two-letter provider codes, for example [\"CZ\", \"GB\"]. Values are trimmed, uppercased, and deduplicated. Unknown exits are excluded and the request never falls back to another country."),
+    .describe("Optional target-visible proxy countries as two-letter provider codes, for example [\"CZ\", \"GB\"]. Use codes supplied by the user or target requirements. When geography matters, do not guess codes or substitute unscoped rotation. Values are trimmed, uppercased, and deduplicated. Unknown exits are excluded and the request never falls back to another country."),
   offload_large: z
     .boolean()
     .optional()
