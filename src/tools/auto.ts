@@ -109,8 +109,8 @@ const AutoMetaSchema = z
 const AutoSessionSchema = z
   .object({
     proxy: z.string().optional().describe("Opaque base36 exit id of the session (e.g. `4DZ3VE`) - pass to foura_single.proxy / foura_proxy.proxy to replay through the same exit. Never a raw IP."),
-    cookies: z.unknown().optional().describe("Cookies accumulated by the winning session - replay them on a follow-up request."),
-    userAgent: z.string().optional().describe("User-Agent string the winning session used - send the same one when replaying."),
+    cookies: z.unknown().optional().describe("Cookie objects accumulated by the winning session. For foura_single, serialize their name/value pairs into a Cookie header; pass the array directly to foura_browser.cookies."),
+    userAgent: z.string().optional().describe("User-Agent used by the winning session. Send it as a User-Agent header to foura_single or as foura_browser.userAgent."),
   })
   .catchall(z.unknown());
 
@@ -131,7 +131,7 @@ const autoOutputShape = {
     .optional()
     .describe("Decoded response body of the delivered page. String by default; object when the body parsed as JSON. Omitted when offloaded."),
   meta: AutoMetaSchema.optional().describe("Completion details: rung, solved, attempts, and credits. Always present."),
-  session: AutoSessionSchema.optional().describe("Reusable {proxy, cookies, userAgent} values for follow-up calls. Present by default; send returnSession:false to omit."),
+  session: AutoSessionSchema.optional().describe("Reusable {proxy, cookies, userAgent} values for follow-up calls. For plain HTTP, call foura_single with session.proxy as proxy, session.userAgent as a User-Agent header, and session.cookies serialized as a Cookie header. For JavaScript, pass the three values to foura_browser fields. Present by default; send returnSession:false to omit."),
   // Resource-link fields used when the response body is offloaded.
   offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
   size_bytes: z.number().int().optional().describe("Total offloaded body size in bytes"),
@@ -151,7 +151,7 @@ const autoOutputShape = {
   code: z
     .string()
     .optional()
-    .describe("Stable error code for retry classification. One of: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), auth_failed (401), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
+    .describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. Other codes: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
 };
 
 const autoInputShape = {

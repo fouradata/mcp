@@ -129,7 +129,7 @@ const singleOutputShape = {
     .object({ maxConcurrency: z.number().optional(), maxRpm: z.number().optional() })
     .optional()
     .describe("Per-service limits at error time"),
-  code: z.string().optional().describe("Stable error code for retry classification. One of: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), auth_failed (401), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
+  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. Other codes: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
 };
 
 const singleInputShape = {
