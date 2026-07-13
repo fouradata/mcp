@@ -22,3 +22,16 @@ jobs:
       - run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with: { node-version: '24' }
+      - name: Publish GitHub release
+        run: node scripts/publish-github-release.mjs "$GITHUB_REF_NAME"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

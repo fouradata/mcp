@@ -62,9 +62,11 @@ describe("foura_proxy exit-country handler contract", () => {
     assert.ok(proxy);
     assert.equal(proxy.inputSchema?.properties?.exitCountries?.minItems, 1);
     assert.equal(proxy.inputSchema?.properties?.exitCountries?.items?.pattern, "^[A-Z]{2}$");
+    assert.match(proxy.inputSchema?.properties?.exitCountries?.description ?? "", /supplied by the user or target requirements/i);
+    assert.match(proxy.inputSchema?.properties?.exitCountries?.description ?? "", /do not guess codes or substitute unscoped rotation/i);
     assert.equal(proxy.outputSchema?.properties?.exitCountry?.pattern, "^[A-Z]{2}$");
-    assert.match(proxy.outputSchema?.properties?.code?.description ?? "", /retrying without.*requires an explicit user decision/i);
-    assert.match(proxy.outputSchema?.properties?.details?.description ?? "", /preserve this scope/i);
+    assert.match(proxy.outputSchema?.properties?.code?.description ?? "", /do not propose or perform an unscoped fallback/i);
+    assert.match(proxy.outputSchema?.properties?.details?.description ?? "", /preserve this scope.*retry later/i);
   });
 
   test("normalizes and forwards exitCountries in the existing single upstream request", async () => {
