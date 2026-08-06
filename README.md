@@ -158,7 +158,7 @@ By default a request presents the current Chrome. Some targets accept one browse
 - `browser` - `Chrome`, `Edge`, `Safari`, `Firefox`, or `Tor`.
 - `os` - `Windows`, `macOS`, `Android`, or `iOS`. A family name accepts any of its versions; an exact label such as `macOS Tahoe` narrows further.
 - `version` - major (`"146"`) or exact (`"18.4"`). The newest match wins when several fit.
-- `profile` - an exact id when you already have one, for example `"chrome146"`.
+- `profile` - an exact id from the catalogue, when you already have one.
 
 The full catalogue is public at [api.foura.ai/api/profiles](https://api.foura.ai/api/profiles), no key required. Selection needs `unblocker` on, which is the default. A combination that does not exist returns an error listing what is available, so a request is never quietly sent as a browser you did not choose.
 

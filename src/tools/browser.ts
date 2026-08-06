@@ -215,7 +215,7 @@ export function registerBrowserTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.5.0 (browser)",
+          "User-Agent": "foura-mcp/0.6.0 (browser)",
         },
         body: JSON.stringify(upstreamBody),
       });

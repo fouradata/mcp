@@ -140,7 +140,7 @@ const ProxyInnerRequestSchema = z
     profile: z
       .string()
       .optional()
-      .describe("Exact profile id from the public catalogue at https://api.foura.ai/api/profiles, for example \"chrome146\". Use browser/os/version when you do not have an id."),
+      .describe("Exact profile id from the public catalogue at https://api.foura.ai/api/profiles. Use browser/os/version when you do not have an id."),
     browser: z
       .string()
       .optional()
@@ -329,7 +329,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.5.0 (proxy)",
+          "User-Agent": "foura-mcp/0.6.0 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });
