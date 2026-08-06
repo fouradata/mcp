@@ -116,10 +116,10 @@ describe("browser profile selection contract", () => {
 
   test("foura_single forwards an exact profile id unchanged", async () => {
     enqueue({ status: 200, data: "ok", total_time: 0.2 });
-    const result = await client.callTool("foura_single", { ...target, profile: "chrome146" });
+    const result = await client.callTool("foura_single", { ...target, profile: "catalogue-id" });
 
     assert.notEqual(result.isError, true);
-    assert.equal(requests.at(-1).body.profile, "chrome146");
+    assert.equal(requests.at(-1).body.profile, "catalogue-id");
   });
 
   test("foura_proxy nests the profile fields inside the inner request", async () => {
@@ -204,6 +204,18 @@ describe("browser profile selection contract", () => {
       const tool = tools.find((entry) => entry.name === name);
       const description = tool.outputSchema?.properties?.defense?.description ?? "";
       assert.match(description, /retry with a different browser, os, or version/i, `${name} defense guidance`);
+    }
+  });
+
+  test("published descriptions name a browser but never a version or platform", async () => {
+    const tools = await client.listTools();
+    for (const tool of tools) {
+      const text = JSON.stringify([tool.description, tool.inputSchema, tool.outputSchema]);
+      assert.doesNotMatch(
+        text,
+        /(?:chrome|edge|safari|firefox|tor)\s*\d/i,
+        `${tool.name} must not publish a browser version`,
+      );
     }
   });
 
