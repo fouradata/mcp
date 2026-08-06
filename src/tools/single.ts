@@ -164,7 +164,7 @@ const singleInputShape = {
   browser: z
     .string()
     .optional()
-    .describe("Browser to present: Chrome, Edge, Safari, Firefox, or Tor. Omit every profile field to send the current Chrome default."),
+    .describe("Browser to present: Chrome, Edge, Safari, Firefox, or Tor. Omit every profile field and the request presents the latest Google Chrome."),
   os: z
     .string()
     .optional()
@@ -172,7 +172,7 @@ const singleInputShape = {
   version: z
     .string()
     .optional()
-    .describe("Browser version to present, major like \"146\" or exact like \"18.4\". The newest match wins. An impossible combination returns an error listing what is available; no other browser is substituted."),
+    .describe("Browser version to present, as listed in the catalogue. The newest match wins when several fit. An impossible combination returns an error listing what is available; no other browser is substituted."),
   data: z
     .union([z.string(), z.record(z.string(), z.unknown())])
     .optional()

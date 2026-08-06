@@ -18,8 +18,11 @@ function extractCodeBlocks(text, lang) {
 
 const jsonBlocks = extractCodeBlocks(readme, "json");
 
+// Public copy names the browser we present, never the version or platform we
+// present it on: "the latest Google Chrome", not a version-bearing profile id.
+// Callers who need exact values read the catalogue at /api/profiles.
 const LEAKY_TERMS = [
-  /chrome\s*\d+/i,
+  /(?:chrome|edge|safari|firefox|tor)\s*\d/i,
   /\bheadless\b/i,
   /curl[-_]impersonate/i,
   /\bja3\b/i,

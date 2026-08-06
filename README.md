@@ -144,7 +144,7 @@ Supports custom headers, a body, per-stage timeouts, redirect controls, JSON aut
 
 #### Choosing which browser you present
 
-By default a request presents the current Chrome. Some targets accept one browser and refuse another, so `foura_single` and `foura_proxy` let you pick:
+By default a request presents the latest Google Chrome. Some targets accept one browser and refuse another, so `foura_single` and `foura_proxy` let you pick:
 
 ```jsonc
 {
@@ -156,11 +156,11 @@ By default a request presents the current Chrome. Some targets accept one browse
 ```
 
 - `browser` - `Chrome`, `Edge`, `Safari`, `Firefox`, or `Tor`.
-- `os` - `Windows`, `macOS`, `Android`, or `iOS`. A family name accepts any of its versions; an exact label such as `macOS Tahoe` narrows further.
-- `version` - major (`"146"`) or exact (`"18.4"`). The newest match wins when several fit.
+- `os` - `Windows`, `macOS`, `Android`, or `iOS`. A family name accepts any of its versions; the exact labels in the catalogue narrow further.
+- `version` - any version the catalogue lists for that browser. The newest match wins when several fit.
 - `profile` - an exact id from the catalogue, when you already have one.
 
-The full catalogue is public at [api.foura.ai/api/profiles](https://api.foura.ai/api/profiles), no key required. Selection needs `unblocker` on, which is the default. A combination that does not exist returns an error listing what is available, so a request is never quietly sent as a browser you did not choose.
+The full catalogue is public at [api.foura.ai/api/profiles](https://api.foura.ai/api/profiles), no key required, and its `default` field names the profile a request gets when you ask for nothing. Selection needs `unblocker` on, which is the default. A combination that does not exist returns an error listing what is available, so a request is never quietly sent as a browser you did not choose.
 
 ### `foura_proxy` - rotating proxies with retry
 
