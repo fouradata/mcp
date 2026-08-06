@@ -119,18 +119,36 @@ describe("Origin and Host validation", () => {
 });
 
 describe("WWW-Authenticate on 401", () => {
-  test("1. missing Bearer -> 401 + WWW-Authenticate header", async () => {
+  // Discovery is keyless since 0.4.4 (registries and gateways enumerate the
+  // server before a user supplies a key), so only execution challenges.
+  test("1. missing Bearer -> discovery succeeds", async () => {
     const res = await request(`${server.url}/mcp`, {
       method: "POST",
       headers: { "Content-Type": CT, Accept: ACCEPT },
       body: initBody(),
     });
     res.body.dump?.();
+    assert.equal(res.statusCode, 200);
+  });
+
+  test("2. missing Bearer on a tool call -> 401 + WWW-Authenticate header", async () => {
+    const res = await request(`${server.url}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": CT, Accept: ACCEPT },
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "foura_single", arguments: { method: "GET", url: "https://example.com" } },
+      }),
+    });
+    res.body.dump?.();
     assert.equal(res.statusCode, 401);
-    const wwwAuth = res.headers["www-authenticate"];
+    const wwwAuth = String(res.headers["www-authenticate"] ?? "");
     assert.ok(wwwAuth, "WWW-Authenticate header required on 401");
-    assert.match(String(wwwAuth), /^Bearer realm="foura-mcp"/);
-    assert.match(String(wwwAuth), /resource_metadata="https?:\/\/.+"/);
+    assert.match(wwwAuth, /^Bearer realm="foura-mcp"/);
+    // 0.4.3 dropped the RFC 9728 resource_metadata parameter on purpose:
+    // advertising it makes OAuth-capable gateways start a flow this server
+    // does not implement. Re-adding it silently breaks those clients.
+    assert.doesNotMatch(wwwAuth, /resource_metadata/);
   });
 });
 
