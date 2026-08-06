@@ -8,6 +8,8 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 - Both tools now surface `defense` when the target ran a bot check. `defense.solved: false` means the body may be a challenge page, so an agent can retry with another browser profile or escalate.
 ### Fixed
 - The `unblocker` description on `foura_single` and `foura_proxy` said the default was off. It has always been on, so requests already carried a full browser header set. The schema text now matches the behaviour.
+### Security
+- Updated the MCP SDK to 1.30.0 and dependencies to clear published advisories in `undici`, `hono`, `@hono/node-server`, `fast-uri`, `ip-address` and `body-parser`. `npm audit` reports no known vulnerabilities.
 
 ## [0.5.0] - 2026-07-13
 ### Added

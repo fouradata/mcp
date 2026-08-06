@@ -26,7 +26,7 @@
     "test:integration:http": "node --test --test-reporter=spec 'tests/integration-http/**/*.test.mjs'",
     "test:docs": "node --test --test-reporter=spec 'tests/docs-compliance/**/*.test.mjs'",
     "test:syntax": "node scripts/check-test-syntax.mjs",
-    "test:ci": "npm run lint && npm run build && npm run test:unit && npm run test:integration:stdio:mocked && npm run test:docs && npm run test:syntax && npm run audit:tokens && npm run audit:package",
+    "test:ci": "npm run lint && npm run build && npm run test:unit && npm run test:integration:stdio:mocked && npm run test:integration:http:local && npm run test:docs && npm run test:syntax && npm run audit:tokens && npm run audit:package",
     "test:all": "npm run test && npm run test:integration:http",
     "smoke": "node tests/smoke.mjs",
     "inspector": "npx -y @modelcontextprotocol/inspector tsx src/stdio.ts",
@@ -35,18 +35,19 @@
     "audit:tokens": "node scripts/audit-tokens.mjs",
     "bump": "node scripts/bump.mjs",
     "verify:release": "node scripts/verify-release-tag.mjs",
-    "prepublishOnly": "npm run test:ci"
+    "prepublishOnly": "npm run test:ci",
+    "test:integration:http:local": "node --test --test-concurrency=1 --test-reporter=spec tests/integration-http/audit-hardening.test.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "express": "^5.2.1",
-    "undici": "^8.2.0",
+    "undici": "^8.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.2",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.5",
     "typescript": "^7.0.2"
   },
   "allowScripts": {

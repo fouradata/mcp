@@ -17,7 +17,9 @@ describe("mcp.foura.ai - Streamable HTTP transport", () => {
     }
   });
 
-  test("2. missing Bearer -> 401", async () => {
+  // Discovery is public and execution is not (since 0.4.4), so the two halves
+  // are asserted separately. Neither needs a key.
+  test("2a. missing Bearer -> discovery still succeeds", async () => {
     const res = await request(BASE, {
       method: "POST",
       headers: {
@@ -29,7 +31,24 @@ describe("mcp.foura.ai - Streamable HTTP transport", () => {
         params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "x", version: "0" } },
       }),
     });
+    assert.equal(res.statusCode, 200);
+    res.body.dump?.();
+  });
+
+  test("2b. missing Bearer -> a tool call is 401 with a Bearer challenge", async () => {
+    const res = await request(BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "foura_single", arguments: { method: "GET", url: "https://example.com" } },
+      }),
+    });
     assert.equal(res.statusCode, 401);
+    assert.match(res.headers["www-authenticate"] ?? "", /^Bearer/);
     res.body.dump?.();
   });
 
