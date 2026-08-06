@@ -145,4 +145,21 @@ describe("proxy inputSchema", () => {
       }).success, false);
     }
   });
+
+  test("26. inner request accepts the browser profile fields", () => {
+    assert.equal(S.safeParse({
+      request: { method: "GET", url: "https://example.com", profile: "chrome146" },
+    }).success, true);
+    assert.equal(S.safeParse({
+      request: { method: "GET", url: "https://example.com", browser: "Safari", os: "iOS", version: "18.4" },
+    }).success, true);
+  });
+
+  test("27. inner request rejects non-string profile fields", () => {
+    for (const bad of [{ profile: 1 }, { browser: {} }, { os: 0 }, { version: false }]) {
+      assert.equal(S.safeParse({
+        request: { method: "GET", url: "https://example.com", ...bad },
+      }).success, false);
+    }
+  });
 });

@@ -61,7 +61,7 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text",
             text:
-              `Fetch ${url} using the foura_single tool with unblocker:true. Most news and blog sites are server-rendered, so start with HTTP.\n\n` +
+              `Fetch ${url} using the foura_single tool. Most news and blog sites are server-rendered, so start with HTTP.\n\n` +
               `If foura_single returns a 403, captcha page, or empty content, retry the same URL with foura_proxy (maxTries:3) - it routes through a rotating proxy pool.\n\n` +
               `From the response, extract:\n` +
               `- headline (the main H1, not the page title bar)\n` +
@@ -98,7 +98,7 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text",
             text:
-              `Use the foura_proxy tool with maxTries:5 and unblocker:true to fetch ${url}. Pricing pages often have aggressive bot detection, so go through the proxy pool from the start.\n\n` +
+              `Use the foura_proxy tool with maxTries:5 to fetch ${url}. Pricing pages often have aggressive bot detection, so go through the proxy pool from the start.\n\n` +
               `Extract the current price (look for visible $/€/£ amounts, JSON-LD Offer schema, [itemprop=price]).\n\n` +
               (target_price
                 ? `Compare against target price ${target_price}: report whether current is below/at/above target, and the absolute difference.\n\n`
@@ -170,7 +170,7 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text",
             text:
-              `Parse the following comma-separated URLs and fetch each one concurrently using foura_single (unblocker:true).\n\n` +
+              `Parse the following comma-separated URLs and fetch each one concurrently using foura_single.\n\n` +
               `URLs: ${urls}\n\n` +
               `For any URL that returns 403, captcha page, or empty body - retry that single URL with foura_proxy (maxTries:3).\n\n` +
               `Return a JSON array, one entry per URL in input order:\n` +

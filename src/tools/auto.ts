@@ -260,7 +260,8 @@ export function registerAutoTool(server: McpServer): void {
         "content. Auto makes bounded attempts and returns either validated content or a failure; it cannot " +
         "guarantee a match. The response includes completion details and, " +
         "by default, reusable session values for follow-up calls. Use a lower-level tool when you need " +
-        "direct control over HTTP, proxy selection, or browser navigation.",
+        "direct control over HTTP, proxy selection, or browser navigation, or to choose which browser is " +
+        "presented to the target: that lives on foura_single and foura_proxy.",
       inputSchema: autoInputShape,
       outputSchema: autoOutputShape,
       annotations: {

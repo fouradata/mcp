@@ -129,19 +129,38 @@ The client surface is intentionally minimal: `url` (required), plus optional `me
 
 ### `foura_single` - fast HTTP
 
-One HTTP request, response back. Use it for static pages, JSON APIs, and server-rendered HTML. Set `unblocker: true` if the target is picky about wire-level signals.
+One HTTP request, response back. Use it for static pages, JSON APIs, and server-rendered HTML. `unblocker` defaults to `true`, so the request already carries a full browser header set; set it to `false` for a plain HTTP request.
+
+```jsonc
+{
+  "method": "GET",
+  "url": "https://example.com"
+}
+```
+
+Supports custom headers, a body, per-stage timeouts, redirect controls, JSON auto-parse, a binary-buffer mode, and built-in response validation (`validate.status.accept`, `validate.data.fail`, and so on). If `foura_single` comes back blocked - status 403/429, a captcha page, challenge response headers, or a known challenge title - try a different browser profile (below), then escalate to `foura_proxy`. Start with `maxTries: 5`; protected targets may need `25-30`. If the page also needs JavaScript to render, pass `foura_proxy`'s returned `proxy` ID to `foura_browser.proxy`.
+
+`structuredContent` shape: `{status, headers, data, total_time, ...}`. When the target ran a bot check, the response also carries `defense`; `defense.solved: false` means the body may be a challenge page rather than the content you asked for.
+
+#### Choosing which browser you present
+
+By default a request presents the current Chrome. Some targets accept one browser and refuse another, so `foura_single` and `foura_proxy` let you pick:
 
 ```jsonc
 {
   "method": "GET",
   "url": "https://example.com",
-  "unblocker": true
+  "browser": "Firefox",
+  "os": "Windows"
 }
 ```
 
-Supports custom headers, a body, per-stage timeouts, redirect controls, JSON auto-parse, a binary-buffer mode, and built-in response validation (`validate.status.accept`, `validate.data.fail`, and so on). If `foura_single` comes back blocked - status 403/429, a captcha page, challenge response headers, or a known challenge title - escalate to `foura_proxy`. Start with `maxTries: 5`; protected targets may need `25-30`. If the page also needs JavaScript to render, pass `foura_proxy`'s returned `proxy` ID to `foura_browser.proxy`.
+- `browser` - `Chrome`, `Edge`, `Safari`, `Firefox`, or `Tor`.
+- `os` - `Windows`, `macOS`, `Android`, or `iOS`. A family name accepts any of its versions; an exact label such as `macOS Tahoe` narrows further.
+- `version` - major (`"146"`) or exact (`"18.4"`). The newest match wins when several fit.
+- `profile` - an exact id when you already have one, for example `"chrome146"`.
 
-`structuredContent` shape: `{status, headers, data, total_time, ...}`.
+The full catalogue is public at [api.foura.ai/api/profiles](https://api.foura.ai/api/profiles), no key required. Selection needs `unblocker` on, which is the default. A combination that does not exist returns an error listing what is available, so a request is never quietly sent as a browser you did not choose.
 
 ### `foura_proxy` - rotating proxies with retry
 
@@ -154,12 +173,15 @@ Same target shape as `foura_single`, but routed through rotating proxies with au
   "request": {
     "method": "GET",
     "url": "https://example.com/pricing",
-    "unblocker": true
+    "browser": "Chrome",
+    "os": "Windows"
   }
 }
 ```
 
 `structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
+
+The inner `request` takes the same browser-profile fields as `foura_single`: `browser`, `os`, `version`, or an exact `profile`.
 
 For difficult WAF challenges, use `maxTries: 25-30`. For a country allowlist, set `exitCountries` instead of increasing attempts. If the target needs JavaScript rendering, pass the returned `proxy` ID to `foura_browser.proxy`.
 
@@ -242,7 +264,7 @@ The lower-level tools compose. `foura_proxy` returns the base36 ID of the exit i
 // 1. Find a working exit. Difficult protected targets may need maxTries:25-30.
 const r = await foura_proxy({
   maxTries: 30,
-  request: { method: "GET", url: "https://probe.example.com", unblocker: true }
+  request: { method: "GET", url: "https://probe.example.com" }
 });
 // Returns { status: 200, proxy: "4DZ3VE", ... }
 

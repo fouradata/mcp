@@ -143,4 +143,11 @@ describe("proxy outputSchema - fixture parity", () => {
       details: { exitCountries: ["USA"] },
     }).success, false);
   });
+
+  test("21. defense passes through with solved and unlisted keys", () => {
+    const r = S.safeParse({ status: 200, proxy: "4DZ3VE", defense: { solved: true, vendor: "example" } });
+    assert.equal(r.success, true);
+    assert.equal(r.data?.defense?.solved, true);
+    assert.equal(S.safeParse({ status: 200, defense: { solved: 1 } }).success, false);
+  });
 });

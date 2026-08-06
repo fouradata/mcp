@@ -14,10 +14,12 @@ read-only (`readOnlyHint: true`) and reach the open web (`openWorldHint: true`).
 - **`foura_auto`** - the default. Give it a `url`; it returns the content and picks the fetch
   method for you. Use this first unless you need explicit control. Optional
   `validate.data.accept` lets it tell a real page from a challenge page.
-- **`foura_single`** - one fast HTTP request. Static pages and JSON APIs. Set
-  `unblocker: true` for wire-level anti-bot targets.
+- **`foura_single`** - one fast HTTP request. Static pages and JSON APIs. A full browser header
+  set is sent by default (`unblocker`); set `browser`, `os`, or `version` when a target refuses
+  the default Chrome.
 - **`foura_proxy`** - the same request through a rotating proxy pool with retry. Use when a
-  direct request is blocked; difficult protected targets may need `maxTries: 25-30`.
+  direct request is blocked; difficult protected targets may need `maxTries: 25-30`. The inner
+  `request` takes the same browser-profile fields.
 - **`foura_browser`** - a real browser session; JavaScript runs and the DOM finishes rendering.
   Use for SPAs and lazy-loaded content.
 

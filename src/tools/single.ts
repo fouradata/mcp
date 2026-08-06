@@ -95,6 +95,15 @@ const ResponseHeadersSchema = z
   })
   .catchall(z.union([z.string(), z.array(z.string())]));
 
+// Present only when the target ran a bot check on the way to the body.
+const DefenseSchema = z
+  .object({
+    solved: z.boolean().optional().describe("True when the check was met and `data` is the real page."),
+  })
+  .catchall(z.unknown())
+  .optional()
+  .describe("Present when the target ran a bot check. When solved is false the body may be a challenge page: retry with a different browser, os, or version, or move to foura_proxy or foura_browser.");
+
 const singleOutputShape = {
   // Success path - matches the upstream response shape
   status: z.number().int().optional().describe("HTTP status code from the target. `0` indicates the request failed before any HTTP response (DNS failure, connection refused, timeout) - check the `error` field for the underlying reason."),
@@ -114,6 +123,7 @@ const singleOutputShape = {
     .union([z.number(), z.string(), z.null()])
     .optional()
     .describe("Wall-clock request duration in seconds. Number when present; string in some variants; null when the request never started."),
+  defense: DefenseSchema,
   // Resource-link fields used when the response body is offloaded.
   offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
   size_bytes: z.number().int().optional().describe("Total offloaded body size in bytes"),
@@ -146,7 +156,23 @@ const singleInputShape = {
   unblocker: z
     .boolean()
     .optional()
-    .describe("Add common browser headers such as User-Agent, Sec-Ch-Ua, and Accept-Encoding. Default false. Enable it for targets that reject basic HTTP requests."),
+    .describe("Send a full browser header set, including User-Agent and Sec-Ch-Ua. Default true. Set false for a plain HTTP request; profile selection needs it on and errors when it is off."),
+  profile: z
+    .string()
+    .optional()
+    .describe("Exact profile id from the public catalogue at https://api.foura.ai/api/profiles, for example \"chrome146\". Use browser/os/version when you do not have an id."),
+  browser: z
+    .string()
+    .optional()
+    .describe("Browser to present: Chrome, Edge, Safari, Firefox, or Tor. Omit every profile field to send the current Chrome default."),
+  os: z
+    .string()
+    .optional()
+    .describe("Operating system to present: Windows, macOS, Android, or iOS. A family name accepts any of its versions."),
+  version: z
+    .string()
+    .optional()
+    .describe("Browser version to present, major like \"146\" or exact like \"18.4\". The newest match wins. An impossible combination returns an error listing what is available; no other browser is substituted."),
   data: z
     .union([z.string(), z.record(z.string(), z.unknown())])
     .optional()
@@ -230,7 +256,7 @@ export function registerSingleTool(server: McpServer): void {
       title: "FourA - single HTTP request",
       description:
         "Send one HTTP request and return the response. Use it for static pages, JSON APIs, and " +
-        "server-rendered HTML. Set unblocker:true for targets that reject basic HTTP requests. " +
+        "server-rendered HTML. Set browser, os, or version when a target refuses the default Chrome. " +
         "Switch to foura_proxy if the response is blocked, and use foura_browser when the page needs JavaScript.",
       inputSchema: singleInputShape,
       outputSchema: singleOutputShape,

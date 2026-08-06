@@ -136,7 +136,23 @@ const ProxyInnerRequestSchema = z
     unblocker: z
       .boolean()
       .optional()
-      .describe("Add common browser headers such as User-Agent, Sec-Ch-Ua, and Accept-Encoding. Default false. Enable it for targets that reject basic HTTP requests."),
+      .describe("Send a full browser header set, including User-Agent and Sec-Ch-Ua. Default true. Set false for a plain HTTP request; profile selection needs it on and errors when it is off."),
+    profile: z
+      .string()
+      .optional()
+      .describe("Exact profile id from the public catalogue at https://api.foura.ai/api/profiles, for example \"chrome146\". Use browser/os/version when you do not have an id."),
+    browser: z
+      .string()
+      .optional()
+      .describe("Browser to present: Chrome, Edge, Safari, Firefox, or Tor. Omit every profile field to send the current Chrome default."),
+    os: z
+      .string()
+      .optional()
+      .describe("Operating system to present: Windows, macOS, Android, or iOS. A family name accepts any of its versions."),
+    version: z
+      .string()
+      .optional()
+      .describe("Browser version to present, major like \"146\" or exact like \"18.4\". The newest match wins. An impossible combination returns an error listing what is available; no other browser is substituted."),
     data: z
       .union([z.string(), z.record(z.string(), z.unknown())])
       .optional()
@@ -169,6 +185,15 @@ const ProxyResponseHeadersSchema = z
   })
   .catchall(z.union([z.string(), z.array(z.string())]));
 
+// Present only when the target ran a bot check on the way to the body.
+const DefenseSchema = z
+  .object({
+    solved: z.boolean().optional().describe("True when the check was met and `data` is the real page."),
+  })
+  .catchall(z.unknown())
+  .optional()
+  .describe("Present when the target ran a bot check. When solved is false the body may be a challenge page: retry with a different browser, os, or version, or move to foura_browser.");
+
 const proxyOutputShape = {
   // Success - PrResponse = DwResponse + {proxy, total}. The backend type
   // also has an optional `proxyId` (number), but the public API encodes it
@@ -185,6 +210,7 @@ const proxyOutputShape = {
     .union([z.number(), z.string(), z.null()])
     .optional()
     .describe("Per-attempt wall-clock duration of the succeeding inner request"),
+  defense: DefenseSchema,
   proxy: z
     .string()
     .optional()
@@ -272,7 +298,8 @@ export function registerProxyTool(server: McpServer): void {
         "Route an HTTP request through rotating proxies with automatic retry. Use it when foura_single " +
         "is blocked or the target requires a specific exit country. The response includes the proxy ID " +
         "that succeeded; reuse it with foura_single or foura_browser, or exclude it with ignoreProxies. " +
-        "Use foura_browser when the page needs JavaScript. Set exitCountries for a strict country allowlist.",
+        "Use foura_browser when the page needs JavaScript. Set exitCountries for a strict country allowlist, " +
+        "and request.browser, request.os, or request.version to present a different browser.",
       inputSchema: proxyInputShape,
       outputSchema: proxyOutputShape,
       annotations: {

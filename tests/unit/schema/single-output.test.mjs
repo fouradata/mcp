@@ -149,4 +149,16 @@ describe("single outputSchema - fixture parity", () => {
     const r = S.safeParse({ size_bytes: 1.5 });
     assert.equal(r.success, false);
   });
+
+  test("23. defense passes through with solved and unlisted keys", () => {
+    const r = S.safeParse({ status: 200, defense: { solved: false, vendor: "example", present: ["example"] } });
+    assert.equal(r.success, true);
+    assert.equal(r.data?.defense?.solved, false);
+    assert.equal(r.data?.defense?.vendor, "example");
+  });
+
+  test("24. defense is optional and rejects a non-boolean solved", () => {
+    assert.equal(S.safeParse({ status: 200 }).success, true);
+    assert.equal(S.safeParse({ status: 200, defense: { solved: "yes" } }).success, false);
+  });
 });
