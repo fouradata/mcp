@@ -131,4 +131,29 @@ describe("single inputSchema", () => {
     assert.equal(S.safeParse({ method: "GET", url: "https://example.com", offload_large: true }).success, true);
     assert.equal(S.safeParse({ method: "GET", url: "https://example.com", offload_large: false }).success, true);
   });
+
+  test("28. browser profile fields accept strings", () => {
+    assert.equal(S.safeParse({
+      method: "GET", url: "https://example.com",
+      profile: "chrome146",
+    }).success, true);
+    assert.equal(S.safeParse({
+      method: "GET", url: "https://example.com",
+      browser: "Firefox", os: "Windows", version: "147",
+    }).success, true);
+  });
+
+  test("29. browser profile fields reject non-strings", () => {
+    for (const bad of [{ profile: 1 }, { browser: true }, { os: [] }, { version: 146 }]) {
+      assert.equal(S.safeParse({ method: "GET", url: "https://example.com", ...bad }).success, false);
+    }
+  });
+
+  test("30. omitting the profile fields keeps the request minimal", () => {
+    const r = S.safeParse({ method: "GET", url: "https://example.com" });
+    assert.equal(r.success, true);
+    for (const key of ["profile", "browser", "os", "version"]) {
+      assert.equal(key in (r.data ?? {}), false, `${key} must not be defaulted`);
+    }
+  });
 });

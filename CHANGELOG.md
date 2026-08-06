@@ -2,6 +2,13 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.6.0] - 2026-08-06
+### Added
+- `foura_single` and `foura_proxy` accept an optional browser profile: `browser`, `os`, `version`, or an exact `profile` id. Omitting them keeps the previous behaviour, the current Chrome. The catalogue is public at https://api.foura.ai/api/profiles. A combination that does not exist returns an error listing what is available instead of sending a different browser.
+- Both tools now surface `defense` when the target ran a bot check. `defense.solved: false` means the body may be a challenge page, so an agent can retry with another browser profile or escalate.
+### Fixed
+- The `unblocker` description on `foura_single` and `foura_proxy` said the default was off. It has always been on, so requests already carried a full browser header set. The schema text now matches the behaviour.
+
 ## [0.5.0] - 2026-07-13
 ### Added
 - `foura_proxy` accepts an optional `exitCountries` allowlist and returns the selected `exitCountry` on a scoped success. Unknown exits are excluded and no eligible scope is silently dropped.

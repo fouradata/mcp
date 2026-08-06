@@ -1,7 +1,7 @@
 {
   "name": "@fouradata/mcp",
   "mcpName": "ai.foura/mcp",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Web access for AI agents - smart HTTP, rotating proxy, and full-browser tools plus six ready-made workflows.",
   "type": "module",
   "main": "dist/server.js",
@@ -22,7 +22,7 @@
     "test": "npm run build && npm run test:unit && npm run test:integration:stdio && npm run test:docs",
     "test:unit": "node --test --test-reporter=spec 'tests/unit/**/*.test.mjs'",
     "test:integration:stdio": "node --test --test-concurrency=1 --test-reporter=spec 'tests/integration-stdio/**/*.test.mjs'",
-    "test:integration:stdio:mocked": "node --test --test-concurrency=1 --test-reporter=spec tests/integration-stdio/proxy-exit-country-contract.test.mjs tests/integration-stdio/tool-guidance-contract.test.mjs",
+    "test:integration:stdio:mocked": "node --test --test-concurrency=1 --test-reporter=spec tests/integration-stdio/proxy-exit-country-contract.test.mjs tests/integration-stdio/tool-guidance-contract.test.mjs tests/integration-stdio/browser-profile-contract.test.mjs",
     "test:integration:http": "node --test --test-reporter=spec 'tests/integration-http/**/*.test.mjs'",
     "test:docs": "node --test --test-reporter=spec 'tests/docs-compliance/**/*.test.mjs'",
     "test:syntax": "node scripts/check-test-syntax.mjs",
