@@ -252,6 +252,88 @@ describe("MCP-Protocol-Version validation", () => {
   });
 });
 
+// Spec 2026-07-28 made MCP stateless: no initialize handshake, no session id,
+// per-request `_meta`. This server speaks the initialize-based ("legacy") era.
+// Clients that speak both eras probe by sending a modern request FIRST and
+// decide from the 400 body whether to fall back:
+//
+//   "If the body contains a recognized modern JSON-RPC error, the server speaks
+//    a modern version of MCP - retry using the advertised `supported` versions
+//    ... If the body is empty or is not a recognized modern JSON-RPC error,
+//    fall back to `initialize` and continue with the legacy version."
+//   -- 2026-07-28 / basic/transports/streamable-http#backward-compatibility
+//
+// So our rejection has to land in the FALLBACK branch. Today it does, but only
+// because -32602 happens not to be one of the three codes the spec reserves for
+// modern servers. That is an accident, and an accident that breaks silently:
+// every dual-era client would stop falling back and simply fail to connect,
+// with nothing on our side going red. This block makes it deliberate.
+const MODERN_ERA_VERSION = "2026-07-28";
+// Codes a modern server returns on 400. Emitting ANY of these tells a probing
+// client "I am modern, do not fall back".
+// -- 2026-07-28 / basic/index#error-codes
+const MODERN_ERA_ERROR_CODES = new Map([
+  [-32020, "HeaderMismatch"],
+  [-32021, "MissingRequiredClientCapability"],
+  [-32022, "UnsupportedProtocolVersion"],
+]);
+
+describe("dual-era client fallback (spec 2026-07-28)", () => {
+  const weSpeakModern = SUPPORTED_PROTOCOL_VERSIONS.includes(MODERN_ERA_VERSION);
+
+  test(`1. a client announcing ${MODERN_ERA_VERSION} is answered so it can fall back`, async () => {
+    const res = await request(`${server.url}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": CT, Accept: ACCEPT,
+        "MCP-Protocol-Version": MODERN_ERA_VERSION,
+      },
+      body: initBody(),
+    });
+
+    if (weSpeakModern) {
+      // The SDK now carries the modern era. This whole block is obsolete:
+      // the server must ACCEPT the version, and the contract to pin becomes
+      // `server/discover` + per-request `_meta`, not the fallback path.
+      res.body.dump?.();
+      assert.notEqual(res.statusCode, 400,
+        `The bundled SDK lists ${MODERN_ERA_VERSION} in SUPPORTED_PROTOCOL_VERSIONS, so the ` +
+        "server must serve it instead of rejecting it. Rewrite this block for the modern era.");
+      return;
+    }
+
+    const body = await res.body.json();
+    assert.equal(res.statusCode, 400,
+      `${MODERN_ERA_VERSION} is not in the bundled SDK, so it must be rejected with 400`);
+
+    // A dual-era client reads the BODY to pick its branch, so an empty or
+    // unparseable body sends it down the deprecated HTTP+SSE probe instead.
+    assert.equal(body.jsonrpc, "2.0", "the 400 body must be a JSON-RPC error object");
+    assert.equal(typeof body.error?.code, "number", "the 400 body must carry an error code");
+    assert.ok(body.error.message, "the 400 body must carry a message clients can surface");
+
+    const modernName = MODERN_ERA_ERROR_CODES.get(body.error.code);
+    assert.equal(modernName, undefined,
+      `Rejecting with ${body.error.code} (${modernName}) tells a dual-era client this server ` +
+      "speaks the modern era, so it retries instead of falling back to initialize - and never " +
+      `connects. Use a code outside ${[...MODERN_ERA_ERROR_CODES.keys()].join(", ")} for as ` +
+      "long as this server is initialize-based.");
+  });
+
+  test("2. after the rejection, the legacy initialize handshake still works", async () => {
+    // The half that actually matters to a user: the fallback the client makes
+    // must succeed. Keyless, because discovery is public since 0.4.4.
+    const res = await request(`${server.url}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": CT, Accept: ACCEPT },
+      body: initBody(),
+    });
+    res.body.dump?.();
+    assert.equal(res.statusCode, 200,
+      "a client that fell back to initialize must be served, or the probe was pointless");
+  });
+});
+
 describe("request body size cap", () => {
   test("1. 200 KB body -> accepted by transport", async () => {
     const big = JSON.stringify({
