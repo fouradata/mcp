@@ -191,7 +191,8 @@ export function registerBrowserTool(server: McpServer): void {
         "browser challenges. You can set your own headers, cookies and userAgent, and checkStatus or " +
         "checkText turn a navigation that rendered the wrong page into a failure instead of returning it " +
         "as content. For a protected page, call foura_proxy first and pass its returned proxy ID here to " +
-        "reuse that exit; with no proxy the session leaves from one fixed address. Set unblocker:false " +
+        "reuse that same exit, instead of starting a new selection here; with no proxy the session " +
+        "leaves from one fixed address. Set unblocker:false " +
         "when you want the page exactly as it loads, challenge included. It is the most expensive of the " +
         "four tools and the slowest, so prefer foura_single or foura_proxy whenever the content is already " +
         "in the HTML. One FourA API key authenticates every call, the result reports the credits it spent, " +

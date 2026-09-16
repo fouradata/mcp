@@ -337,7 +337,8 @@ export function registerProxyTool(server: McpServer): void {
         "instruction). maxTries bounds how many exits are tried and timeout_ms bounds the whole rotation, " +
         "so a short timeout can end it before maxTries is reached; protected targets often need 25 to 30. " +
         "validate decides what counts as delivered, and an attempt it rejects is retried on the next exit. " +
-        "The response names the exit that succeeded, to reuse with foura_single or foura_browser, and a " +
+        "The response returns the id of the exit that succeeded: pass that returned id to " +
+        "foura_single.proxy or foura_browser.proxy to send the next request from the same exit. A " +
         "failed rotation returns attemptReport, which separates exits that never answered from exits a bot " +
         "check refused from pages your own rule threw away. Use foura_browser when the page needs " +
         "JavaScript. Rotation costs several times a single request. One FourA API key authenticates every " +
