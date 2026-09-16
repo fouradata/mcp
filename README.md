@@ -179,9 +179,13 @@ Same target shape as `foura_single`, but routed through rotating proxies with au
 }
 ```
 
-`structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
+`structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). When the rotation had to move to another browser family to get an answer, `profile` names the family it settled on; replay with it or the next call repeats the version that failed. `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
 
 The inner `request` takes the same browser-profile fields as `foura_single`: `browser`, `os`, `version`, or an exact `profile`.
+
+**`exitClass` - for a target the standard pool cannot reach.** Set `exitClass: "premium"` and the request may escalate to a premium exit instead of only rotating within the standard pool. It is an allowance, not an instruction: the standard pool still races for the answer and usually wins, and a request it answers first costs no premium traffic. The response reports `exitClass` back, `premium` or `standard`, so you can see per request which one served you. `standard` is also the answer once the premium traffic in your plan is spent, and it is a normal result, not an error. `exitClass: "standard"` forbids escalation outright. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`.
+
+**`attemptReport` - why a rotation ran out of tries.** Every failed `foura_proxy` result carries it beside the error. `summary` is one sentence; the counts underneath separate causes with opposite fixes: `noResponse` (the exit never answered), `defense` (a bot check was recognised, named in `vendors`), `contentRejected` (HTTP 200, no bot check, rejected only by your own `validate.data`), `statusRejected`, and `other`. `profilesTried` lists the browsers the task sent, in first-use order, with `default` meaning the request went out exactly as written. A high `contentRejected` means the pages arrived and your own rule threw them away: fetch one with `foura_single` and no `validate`, look at it, and rewrite the rule.
 
 For difficult WAF challenges, use `maxTries: 25-30`. For a country allowlist, set `exitCountries` instead of increasing attempts. If the target needs JavaScript rendering, pass the returned `proxy` ID to `foura_browser.proxy`.
 
@@ -253,8 +257,19 @@ Where the upstream returned a status, you also get `status` (HTTP code) and on r
 | `upstream_error` (`>=500`) | Upstream 5xx | Yes - exponential backoff |
 | `upstream_client_error` (4xx) | Other 4xx | Usually no |
 | `no_eligible_proxy` | No proxy matches the requested `exitCountries` | No - change the country scope |
+| `plan_limit_*` (403/429) | Your own FourA plan refused the call, not the target | Only `retryAfter` clears it - see below |
+
+A `plan_limit_` code names which of your plan's limits refused the call: `credits`, `bandwidth`, `rate`, `concurrency`, `browser_daily`, `premium`, or `feature`. It is not the target blocking you, so retrying the same work through another tool spends the rest of the allowance for nothing. Wait out `retryAfter` where there is one, or change the plan.
 
 LLM agents can read `code` directly for retry logic without parsing prose. Spec reference: [foura.ai/docs/api/errors](https://foura.ai/docs/api/errors).
+
+### What every result carries
+
+Beside the tool's own fields, each result reports what the call cost and how to trace it:
+
+- `credits` - credits this call spent, on failures as well, because the work was done either way;
+- `request_id` - FourA's id for the call. Quote it in a support request;
+- `exitClass` - `premium` when a premium exit served the call. On `foura_single` and `foura_browser` that happens when `proxy` replays an exit `foura_proxy` found.
 
 ## Combining the tools - reuse the same exit
 

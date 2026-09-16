@@ -19,7 +19,10 @@ read-only (`readOnlyHint: true`) and reach the open web (`openWorldHint: true`).
   the default Chrome.
 - **`foura_proxy`** - the same request through a rotating proxy pool with retry. Use when a
   direct request is blocked; difficult protected targets may need `maxTries: 25-30`. The inner
-  `request` takes the same browser-profile fields.
+  `request` takes the same browser-profile fields. `exitClass: "premium"` allows escalation to a
+  premium exit for a target the standard pool cannot reach, and the response says which class
+  served. A failed rotation returns `attemptReport`, which separates blocked exits from dead ones
+  from pages your own `validate` rule rejected.
 - **`foura_browser`** - a real browser session; JavaScript runs and the DOM finishes rendering.
   Use for SPAs and lazy-loaded content.
 
@@ -37,7 +40,15 @@ the tools for you.
 Every error carries a `structuredContent` envelope with `{service, code, error}` and, where
 relevant, `status` / `retryAfter`. Read `code` for retry logic: `rate_limited`, `at_capacity`,
 `service_unavailable`, `upstream_error` are retry-safe (respect `retryAfter`); `auth_failed`,
-`bad_request`, `not_found`, `ssrf_blocked` are not. Full list: https://foura.ai/docs/mcp/errors.
+`bad_request`, `not_found`, `ssrf_blocked` are not. A code starting with `plan_limit_` is the
+caller's own FourA plan refusing the call rather than the target: the same work through another
+tool is refused as well, so wait out `retryAfter` or change the plan. Full list:
+https://foura.ai/docs/mcp/errors.
+
+## What a result reports back
+
+Every result carries `credits` (what the call spent, on failures too) and `request_id` (quote it
+in a support request). `exitClass` appears when a premium exit served the call.
 
 ## Auth
 

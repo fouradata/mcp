@@ -2,6 +2,15 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.7.0] - 2026-09-16
+### Added
+- `foura_proxy` accepts `exitClass`. `premium` allows a request to escalate to a premium exit when the standard pool cannot deliver it; it is an allowance, not an instruction, and a request the standard pool answers first costs no premium traffic. The response reports which class served. `standard` forbids escalation. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`.
+- A failed `foura_proxy` rotation returns `attemptReport`: one `summary` sentence plus counts that separate exits that never answered, exits a bot check refused, and pages that arrived and were rejected only by your own `validate` rule. `profilesTried` lists the browsers the task sent.
+- A successful `foura_proxy` response reports `profile` when the rotation moved to another browser family to get the answer, so a replay sends the request that worked rather than the one that failed.
+- Every tool reports `credits` (what the call spent, on failures too) and `request_id` (quote it in a support request). `foura_single` and `foura_browser` report `exitClass` when a premium exit served the call.
+### Changed
+- A refusal raised by your own plan keeps its reason as the error `code`: `plan_limit_credits`, `plan_limit_bandwidth`, `plan_limit_rate`, `plan_limit_concurrency`, `plan_limit_browser_daily`, `plan_limit_premium`, `plan_limit_feature`. It used to arrive as a plain `forbidden` or `rate_limited`, which reads like the target blocking the request and invites a retry through another tool that is refused as well. Where a wait clears the refusal, `retryAfter` carries it.
+
 ## [0.6.0] - 2026-08-06
 ### Added
 - `foura_single` and `foura_proxy` accept an optional browser profile: `browser`, `os`, `version`, or an exact `profile` id. Omitting them keeps the previous behaviour, the current Chrome. The catalogue is public at https://api.foura.ai/api/profiles. A combination that does not exist returns an error listing what is available instead of sending a different browser.

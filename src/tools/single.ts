@@ -4,6 +4,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getApiKey } from "../auth.js";
 import { assertPublicTarget, SsrfBlockedError } from "../safe-target.js";
 import { storePayload, THRESHOLD_BYTES } from "../resources.js";
+import { readUpstreamMeta, planLimitCode, planRetryAfter } from "../upstream.js";
 
 function extractContentType(headers: unknown): string | null {
   if (!Array.isArray(headers)) return null;
@@ -139,7 +140,10 @@ const singleOutputShape = {
     .object({ maxConcurrency: z.number().optional(), maxRpm: z.number().optional() })
     .optional()
     .describe("Per-service limits at error time"),
-  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. Other codes: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive)."),
+  exitClass: z.enum(["standard", "premium"]).optional().describe("`premium` when a premium exit served this call, which happens when `proxy` replays one from foura_proxy."),
+  credits: z.number().optional().describe("Credits this call spent. Reported on failures too: the work was done either way."),
+  request_id: z.string().optional().describe("FourA's id for this call, for a support request."),
+  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. Other codes: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive). A plan_limit_* code is the caller's own FourA plan refusing (credits, bandwidth, rate, concurrency, browser_daily, premium, feature), not the target: wait out retryAfter or change the plan, never retry the same work through another tool."),
 };
 
 const singleInputShape = {
@@ -288,10 +292,12 @@ export function registerSingleTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.6.0 (single)",
+          "User-Agent": "foura-mcp/0.7.0 (single)",
         },
         body: JSON.stringify(upstreamBody),
       });
+
+      const upstreamMeta = readUpstreamMeta(res.headers);
 
       const text = await res.body.text();
       let parsed: unknown;
@@ -307,6 +313,7 @@ export function registerSingleTool(server: McpServer): void {
             },
           ],
           structuredContent: {
+            ...upstreamMeta,
             service: "single" as const,
             code: "upstream_non_json",
             status: res.statusCode,
@@ -318,15 +325,21 @@ export function registerSingleTool(server: McpServer): void {
       if (res.statusCode < 200 || res.statusCode >= 300) {
         const e = parsed as Record<string, unknown>;
         const errMsg = typeof e.error === "string" ? e.error : "Unknown";
-        const retryStr = typeof e.retryAfter === "number" ? ` · retry ${e.retryAfter}s` : "";
+        // A refusal raised by the caller's own plan names the limit; keeping that name is the
+        // difference between "wait, or change the plan" and "the site blocked us, try again".
+        const planCode = planLimitCode(e, res.headers);
+        const retryAfter = typeof e.retryAfter === "number" ? e.retryAfter : planRetryAfter(e);
+        const retryStr = typeof retryAfter === "number" ? ` · retry ${retryAfter}s` : "";
         return {
           isError: true,
           content: [{ type: "text", text: `FourA single error ${res.statusCode}: ${errMsg}${retryStr}` }],
           structuredContent: {
+            ...upstreamMeta,
             ...e,
             service: "single" as const,
-            code: deriveCode(res.statusCode, e),
+            code: planCode ?? deriveCode(res.statusCode, e),
             status: typeof e.status === "number" ? e.status : res.statusCode,
+            ...(retryAfter !== undefined ? { retryAfter } : {}),
           },
         };
       }
@@ -345,6 +358,7 @@ export function registerSingleTool(server: McpServer): void {
             },
           ],
           structuredContent: {
+            ...upstreamMeta,
             ...(parsedObj as Record<string, unknown>),
             service: "single" as const,
             code: deriveCode(innerStatus, parsedObj as Record<string, unknown>),
@@ -377,6 +391,7 @@ export function registerSingleTool(server: McpServer): void {
             { type: "resource_link", uri: stored.uri, name: stored.name, mimeType: stored.mimeType },
           ],
           structuredContent: {
+            ...upstreamMeta,
             status: parsedObj.status,
             headers: parsedObj.headers,
             total_time: parsedObj.total_time as string | number | null | undefined,
@@ -389,7 +404,7 @@ export function registerSingleTool(server: McpServer): void {
       const sizeKb = bodyStr ? (Buffer.byteLength(bodyStr, "utf8") / 1024).toFixed(1) : "0";
       return {
         content: [{ type: "text", text: `${statusLabel} OK · ${sizeKb} KB · ${timeLabel}` }],
-        structuredContent: parsedObj as Record<string, unknown>,
+        structuredContent: { ...upstreamMeta, ...(parsedObj as Record<string, unknown>) },
       };
     }),
   );
