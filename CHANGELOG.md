@@ -8,6 +8,8 @@ All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keep
 - A failed `foura_proxy` rotation returns `attemptReport`: one `summary` sentence plus counts that separate exits that never answered, exits a bot check refused, and pages that arrived and were rejected only by your own `validate` rule. `profilesTried` lists the browsers the task sent.
 - A successful `foura_proxy` response reports `profile` when the rotation moved to another browser family to get the answer, so a replay sends the request that worked rather than the one that failed.
 - Every tool reports `credits` (what the call spent, on failures too) and `request_id` (quote it in a support request). `foura_single` and `foura_browser` report `exitClass` when a premium exit served the call.
+### Security
+- Refreshed dependencies to clear published advisories in `fast-uri`, `hono` and `qs`. `npm audit` reports no known vulnerabilities. No API change.
 ### Changed
 - A refusal raised by your own plan keeps its reason as the error `code`: `plan_limit_credits`, `plan_limit_bandwidth`, `plan_limit_rate`, `plan_limit_concurrency`, `plan_limit_browser_daily`, `plan_limit_premium`, `plan_limit_feature`. It used to arrive as a plain `forbidden` or `rate_limited`, which reads like the target blocking the request and invites a retry through another tool that is refused as well. Where a wait clears the refusal, `retryAfter` carries it.
 
