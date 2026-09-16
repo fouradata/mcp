@@ -329,12 +329,21 @@ export function registerProxyTool(server: McpServer): void {
     {
       title: "FourA - HTTP request via rotating proxies",
       description:
-        "Route an HTTP request through rotating proxies with automatic retry. Use it when foura_single " +
-        "is blocked or the target requires a specific exit country. The response includes the proxy ID " +
-        "that succeeded; reuse it with foura_single or foura_browser, or exclude it with ignoreProxies. " +
-        "Use foura_browser when the page needs JavaScript. Set exitCountries for a strict country allowlist, " +
-        "request.browser, request.os, or request.version to present a different browser, and exitClass for a " +
-        "target the standard pool cannot reach. A failed rotation returns attemptReport, which says why.",
+        "Route an HTTP request through rotating proxies, retrying on another exit until one delivers. " +
+        "Use it when foura_single is blocked, and whenever the exit itself matters: this is the only tool " +
+        "that takes a strict exit-country allowlist (exitCountries, which never falls back to another " +
+        "country), presents a named browser family per attempt, excludes exits you already know are dead " +
+        "(ignoreProxies), and may escalate to a premium exit (exitClass, an allowance rather than an " +
+        "instruction). maxTries bounds how many exits are tried and timeout_ms bounds the whole rotation, " +
+        "so a short timeout can end it before maxTries is reached; protected targets often need 25 to 30. " +
+        "validate decides what counts as delivered, and an attempt it rejects is retried on the next exit. " +
+        "The response returns the id of the exit that succeeded: pass that returned id to " +
+        "foura_single.proxy or foura_browser.proxy to send the next request from the same exit. A " +
+        "failed rotation returns attemptReport, which separates exits that never answered from exits a bot " +
+        "check refused from pages your own rule threw away. Use foura_browser when the page needs " +
+        "JavaScript. Rotation costs several times a single request. One FourA API key authenticates every " +
+        "call, the result reports the credits it spent, and a refusal by your own plan arrives as a " +
+        "plan_limit_ code with retryAfter rather than as a block by the target.",
       inputSchema: proxyInputShape,
       outputSchema: proxyOutputShape,
       annotations: {
@@ -364,7 +373,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.7.0 (proxy)",
+          "User-Agent": "foura-mcp/0.7.1 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });

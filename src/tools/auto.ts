@@ -257,14 +257,20 @@ export function registerAutoTool(server: McpServer): void {
     {
       title: "FourA - auto (smart fetch, picks the method for you)",
       description:
-        "Give it a public URL and get the content back. This is the default when you don't want to choose " +
-        "between HTTP, proxy rotation, and a full browser. On protected targets, or whenever HTTP 200 may " +
-        "still be a challenge or incomplete page, pass validate.data.accept with text unique to the real " +
-        "content. Auto makes bounded attempts and returns either validated content or a failure; it cannot " +
-        "guarantee a match. The response includes completion details and, " +
-        "by default, reusable session values for follow-up calls. Use a lower-level tool when you need " +
-        "direct control over HTTP, proxy selection, or browser navigation, or to choose which browser is " +
-        "presented to the target: that lives on foura_single and foura_proxy.",
+        "Give it a public URL and get the content back. Use it when only the content matters and not how " +
+        "it is fetched: it escalates from a direct request to a rotating proxy to a full browser only as " +
+        "far as the target forces, and returns the session that worked so the next call can replay it. " +
+        "On protected targets, or whenever HTTP 200 may still be a challenge or an incomplete page, pass " +
+        "validate.data.accept with text unique to the real content; auto makes bounded attempts and " +
+        "returns either validated content or a failure, and cannot guarantee a match. It owns its own " +
+        "retry settings, so there is no maxTries here, and timeout_ms is the budget for every attempt " +
+        "together rather than for one. What it cannot do is the reason to reach for another tool: a strict " +
+        "exit country, a pinned exit and a premium exit live on foura_proxy (auto can only avoid exits, " +
+        "through ignoreProxies); choosing which browser is presented to the target lives on foura_single " +
+        "and foura_proxy; a scripted browser session lives on foura_browser. A request that names any of " +
+        "those belongs there rather than here. One FourA API key authenticates every call, the result " +
+        "reports the credits it spent, which is the sum of the attempts it made, and a refusal by your own " +
+        "plan arrives as a plan_limit_ code with retryAfter rather than as a block by the target.",
       inputSchema: autoInputShape,
       outputSchema: autoOutputShape,
       annotations: {
@@ -297,7 +303,7 @@ export function registerAutoTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.7.0 (auto)",
+          "User-Agent": "foura-mcp/0.7.1 (auto)",
         },
         body: JSON.stringify(upstreamBody),
         headersTimeout: 200_000,
