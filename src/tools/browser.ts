@@ -188,8 +188,15 @@ export function registerBrowserTool(server: McpServer): void {
       description:
         "Load a public URL in a full browser session. JavaScript runs, the DOM renders, and cookies " +
         "come back with the response. Use it for single-page apps, lazy-loaded content, or supported " +
-        "browser challenges. For a protected page, call foura_proxy first and pass its returned " +
-        "proxy ID here to reuse that exit. Set unblocker:false when you want the page exactly as it loads.",
+        "browser challenges. You can set your own headers, cookies and userAgent, and checkStatus or " +
+        "checkText turn a navigation that rendered the wrong page into a failure instead of returning it " +
+        "as content. For a protected page, call foura_proxy first and pass its returned proxy ID here to " +
+        "reuse that exit; with no proxy the session leaves from one fixed address. Set unblocker:false " +
+        "when you want the page exactly as it loads, challenge included. It is the most expensive of the " +
+        "four tools and the slowest, so prefer foura_single or foura_proxy whenever the content is already " +
+        "in the HTML. One FourA API key authenticates every call, the result reports the credits it spent, " +
+        "and a refusal by your own plan arrives as a plan_limit_ code, including plan_limit_browser_daily " +
+        "when the daily browser allowance is spent.",
       inputSchema: browserInputShape,
       outputSchema: browserOutputShape,
       annotations: {

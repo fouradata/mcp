@@ -260,8 +260,15 @@ export function registerSingleTool(server: McpServer): void {
       title: "FourA - single HTTP request",
       description:
         "Send one HTTP request and return the response. Use it for static pages, JSON APIs, and " +
-        "server-rendered HTML. Set browser, os, or version when a target refuses the default Chrome. " +
-        "Switch to foura_proxy if the response is blocked, and use foura_browser when the page needs JavaScript.",
+        "server-rendered HTML, with your own headers, body and cookies. Set browser, os, or version " +
+        "when a target refuses the default Chrome. Pass a proxy id returned by foura_proxy to leave " +
+        "from that same exit. validate decides what counts as success, so a response it rejects comes " +
+        "back as a failure instead of as content; the timeouts nest, with timeout_ms bounding the whole " +
+        "request and the connect, accept and server_response ones bounding stages inside it. Switch to " +
+        "foura_proxy when the response is blocked or the exit country matters, and to foura_browser when " +
+        "the page needs JavaScript. One FourA API key authenticates every call, the result reports the " +
+        "credits it spent, and a refusal by your own plan arrives as a plan_limit_ code with retryAfter " +
+        "rather than as a block by the target.",
       inputSchema: singleInputShape,
       outputSchema: singleOutputShape,
       annotations: {

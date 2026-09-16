@@ -2,6 +2,13 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.7.1] - 2026-09-16
+### Changed
+- Rewrote all four tool descriptions so an agent can choose between them without trying one. Each now says what authenticates a call, what a refusal by your own plan looks like (`plan_limit_*` with `retryAfter`, not a block by the target), that the result reports the credits it spent, and how the parameters interact rather than restating the schema: how the timeouts nest, that `validate` decides what counts as success, that `maxTries` and `timeout_ms` bound each other.
+- `foura_auto` now states what it cannot do, because that is the reason to reach for another tool: a strict exit country, a pinned exit and a premium exit live on `foura_proxy`; choosing which browser is presented lives on `foura_single` and `foura_proxy`; a scripted browser session lives on `foura_browser`. It could previously read as a cheaper substitute for all three.
+- `foura_proxy` says plainly that it is the only tool that can scope the exit country, present a named browser family per attempt, exclude known-dead exits, and escalate to a premium exit.
+- `foura_browser` names the headers, cookies and `userAgent` you can set, and what `checkStatus` and `checkText` do to a navigation that rendered the wrong page.
+
 ## [0.7.0] - 2026-09-16
 ### Added
 - `foura_proxy` accepts `exitClass`. `premium` allows a request to escalate to a premium exit when the standard pool cannot deliver it; it is an allowance, not an instruction, and a request the standard pool answers first costs no premium traffic. The response reports which class served. `standard` forbids escalation. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`.
