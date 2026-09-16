@@ -364,7 +364,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.6.0 (proxy)",
+          "User-Agent": "foura-mcp/0.7.0 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });

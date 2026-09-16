@@ -292,7 +292,7 @@ export function registerSingleTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.6.0 (single)",
+          "User-Agent": "foura-mcp/0.7.0 (single)",
         },
         body: JSON.stringify(upstreamBody),
       });
