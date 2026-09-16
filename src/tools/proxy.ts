@@ -4,6 +4,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getApiKey } from "../auth.js";
 import { assertPublicTarget, SsrfBlockedError } from "../safe-target.js";
 import { storePayload, THRESHOLD_BYTES } from "../resources.js";
+import { readUpstreamMeta, planLimitCode, planRetryAfter } from "../upstream.js";
 
 function extractContentType(headers: unknown): string | null {
   if (!Array.isArray(headers)) return null;
@@ -194,6 +195,24 @@ const DefenseSchema = z
   .optional()
   .describe("Present when the target ran a bot check. When solved is false the body may be a challenge page: retry with a different browser, os, or version, or move to foura_browser.");
 
+// Attached to EVERY failed rotation: what the attempts actually ran into. One error string
+// reads the same whether every exit was blocked, every exit was dead, or the pages arrived
+// and the caller's own validate rule threw them away - three causes with opposite fixes.
+const AttemptReportSchema = z
+  .object({
+    total: z.number().int().optional(),
+    noResponse: z.number().int().optional(),
+    defense: z.number().int().optional(),
+    contentRejected: z.number().int().optional(),
+    statusRejected: z.number().int().optional(),
+    other: z.number().int().optional(),
+    vendors: z.array(z.string()).optional(),
+    profilesTried: z.array(z.string()).optional(),
+    summary: z.string().optional(),
+  })
+  .optional()
+  .describe("Why a failed rotation ran out of tries. Read `summary` first. Counts over `total` attempts: noResponse (the exit never answered), defense (a bot check was recognised, named in `vendors`), contentRejected (HTTP 200, no bot check, rejected only by your validate.data), statusRejected (rejected by your validate.status), other. `profilesTried` lists the browsers sent, `default` meaning the request went out as written. High contentRejected means the pages arrived and your own rule threw them away: fetch once with foura_single and no validate, then rewrite it.");
+
 const proxyOutputShape = {
   // Success - PrResponse = DwResponse + {proxy, total}. The backend type
   // also has an optional `proxyId` (number), but the public API encodes it
@@ -224,6 +243,15 @@ const proxyOutputShape = {
     .regex(/^[A-Z]{2}$/)
     .optional()
     .describe("Latest available two-letter target-visible exit-country code used for selection. Present on successful requests that use exitCountries."),
+  profile: z
+    .string()
+    .optional()
+    .describe("The browser family rotation moved to after the target refused the one this request sent. Absent means it went out as written; when present, replay with it or repeat the version that failed."),
+  exitClass: z
+    .enum(["standard", "premium"])
+    .optional()
+    .describe("Which class delivered, when the request named exitClass. `standard` means the standard pool answered first, which is also the answer once the premium allowance is spent. Neither is an error."),
+  attemptReport: AttemptReportSchema,
   total: z
     .number()
     .optional()
@@ -248,7 +276,9 @@ const proxyOutputShape = {
     })
     .optional()
     .describe("Structured no_eligible_proxy context containing the normalized requested country scope. Preserve this scope and retry later. Do not propose or perform an unscoped fallback; change it only after the user explicitly changes the requirement."),
-  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. no_eligible_proxy means the strict exitCountries scope had no match. Keep that scope and retry later; do not propose or perform an unscoped fallback."),
+  credits: z.number().optional().describe("Credits this call spent. Reported on failures too: the work was done either way."),
+  request_id: z.string().optional().describe("FourA's id for this call, for a support request."),
+  code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. no_eligible_proxy means the strict exitCountries scope had no match. Keep that scope and retry later; do not propose or perform an unscoped fallback. A plan_limit_* code is the caller's own FourA plan refusing (credits, bandwidth, rate, concurrency, browser_daily, premium, feature), not the target: wait out retryAfter or change the plan, never retry the same work through another tool."),
 };
 
 const proxyInputShape = {
@@ -283,6 +313,10 @@ const proxyInputShape = {
     .transform((countries) => [...new Set(countries)])
     .optional()
     .describe("Optional target-visible proxy countries as two-letter provider codes, for example [\"CZ\", \"GB\"]. Use codes supplied by the user or target requirements. When geography matters, do not guess codes or substitute unscoped rotation. Values are trimmed, uppercased, and deduplicated. Unknown exits are excluded and the request never falls back to another country."),
+  exitClass: z
+    .enum(["standard", "premium"])
+    .optional()
+    .describe("Allow escalation to a premium exit for a target the standard pool cannot deliver. An allowance, not an instruction: the pool still races and usually wins, and the response reports which class served. `standard` forbids escalation. Without premium exits in the plan the call is refused with code plan_limit_premium."),
   offload_large: z
     .boolean()
     .optional()
@@ -299,7 +333,8 @@ export function registerProxyTool(server: McpServer): void {
         "is blocked or the target requires a specific exit country. The response includes the proxy ID " +
         "that succeeded; reuse it with foura_single or foura_browser, or exclude it with ignoreProxies. " +
         "Use foura_browser when the page needs JavaScript. Set exitCountries for a strict country allowlist, " +
-        "and request.browser, request.os, or request.version to present a different browser.",
+        "request.browser, request.os, or request.version to present a different browser, and exitClass for a " +
+        "target the standard pool cannot reach. A failed rotation returns attemptReport, which says why.",
       inputSchema: proxyInputShape,
       outputSchema: proxyOutputShape,
       annotations: {
@@ -334,6 +369,8 @@ export function registerProxyTool(server: McpServer): void {
         body: JSON.stringify(upstreamBody),
       });
 
+      const upstreamMeta = readUpstreamMeta(res.headers);
+
       const text = await res.body.text();
       let parsed: unknown;
       try {
@@ -348,6 +385,7 @@ export function registerProxyTool(server: McpServer): void {
             },
           ],
           structuredContent: {
+            ...upstreamMeta,
             service: "proxy" as const,
             code: "upstream_non_json",
             status: res.statusCode,
@@ -359,15 +397,21 @@ export function registerProxyTool(server: McpServer): void {
       if (res.statusCode < 200 || res.statusCode >= 300) {
         const e = parsed as Record<string, unknown>;
         const errMsg = typeof e.error === "string" ? e.error : "Unknown";
-        const retryStr = typeof e.retryAfter === "number" ? ` · retry ${e.retryAfter}s` : "";
+        // A refusal raised by the caller's own plan names the limit; keeping that name is the
+        // difference between "wait, or change the plan" and "the site blocked us, try again".
+        const planCode = planLimitCode(e, res.headers);
+        const retryAfter = typeof e.retryAfter === "number" ? e.retryAfter : planRetryAfter(e);
+        const retryStr = typeof retryAfter === "number" ? ` · retry ${retryAfter}s` : "";
         return {
           isError: true,
           content: [{ type: "text", text: `FourA proxy error ${res.statusCode}: ${errMsg}${retryStr}` }],
           structuredContent: {
+            ...upstreamMeta,
             ...e,
             service: "proxy" as const,
-            code: deriveCode(res.statusCode, e),
+            code: planCode ?? deriveCode(res.statusCode, e),
             status: typeof e.status === "number" ? e.status : res.statusCode,
+            ...(retryAfter !== undefined ? { retryAfter } : {}),
           },
         };
       }
@@ -380,6 +424,7 @@ export function registerProxyTool(server: McpServer): void {
         total?: number;
         proxy?: string;
         exitCountry?: string;
+        exitClass?: "standard" | "premium";
         error?: unknown;
         code?: unknown;
         request?: unknown;
@@ -399,6 +444,7 @@ export function registerProxyTool(server: McpServer): void {
             },
           ],
           structuredContent: {
+            ...upstreamMeta,
             ...(parsedObj as Record<string, unknown>),
             service: "proxy" as const,
             code: typeof parsedObj.code === "string"
@@ -419,6 +465,7 @@ export function registerProxyTool(server: McpServer): void {
       const statusLabel = parsedObj.status ?? "?";
       const proxyLabel = parsedObj.proxy ? ` · via ${parsedObj.proxy}` : "";
       const countryLabel = parsedObj.exitCountry ? ` · exit ${parsedObj.exitCountry}` : "";
+      const classLabel = parsedObj.exitClass === "premium" ? " · premium" : "";
 
       const shouldOffload = offload_large === true
         && bodyStr
@@ -430,15 +477,17 @@ export function registerProxyTool(server: McpServer): void {
         const sizeKb = (stored.size / 1024).toFixed(1);
         return {
           content: [
-            { type: "text", text: `${statusLabel} · offloaded ${sizeKb} KB${proxyLabel}${countryLabel}` },
+            { type: "text", text: `${statusLabel} · offloaded ${sizeKb} KB${proxyLabel}${countryLabel}${classLabel}` },
             { type: "resource_link", uri: stored.uri, name: stored.name, mimeType: stored.mimeType },
           ],
           structuredContent: {
+            ...upstreamMeta,
             status: parsedObj.status,
             headers: parsedObj.headers,
             total_time: parsedObj.total_time as string | number | null | undefined,
             proxy: parsedObj.proxy,
             exitCountry: parsedObj.exitCountry,
+            exitClass: parsedObj.exitClass,
             total: parsedObj.total,
             offloaded_resource_uri: stored.uri,
             size_bytes: stored.size,
@@ -448,8 +497,8 @@ export function registerProxyTool(server: McpServer): void {
 
       const sizeKb = bodyStr ? (Buffer.byteLength(bodyStr, "utf8") / 1024).toFixed(1) : "0";
       return {
-        content: [{ type: "text", text: `${statusLabel} OK · ${sizeKb} KB${proxyLabel}${countryLabel}` }],
-        structuredContent: parsedObj as Record<string, unknown>,
+        content: [{ type: "text", text: `${statusLabel} OK · ${sizeKb} KB${proxyLabel}${countryLabel}${classLabel}` }],
+        structuredContent: { ...upstreamMeta, ...(parsedObj as Record<string, unknown>) },
       };
     }),
   );

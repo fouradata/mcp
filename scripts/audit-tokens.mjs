@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 // Keep enough room for all four tool schemas without letting descriptions grow unchecked.
-const BUDGET = Number(process.env.BUDGET_TOKENS ?? 11000);
+const BUDGET = Number(process.env.BUDGET_TOKENS ?? 12000);
 const CHARS_PER_TOKEN = 3.5;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
