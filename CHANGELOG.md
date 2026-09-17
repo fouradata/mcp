@@ -2,6 +2,10 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.7.2] - 2026-09-17
+### Changed
+- README: the `exitClass` section said a request the standard pool answers first costs no premium traffic. That holds only when no premium exit was tried before it. Premium traffic is now counted per premium attempt, as it crosses the network, including an attempt that failed; an attempt still running when another exit answered is stopped and not counted. No change to the tools or their schemas.
+
 ## [0.7.1] - 2026-09-16
 ### Changed
 - Rewrote all four tool descriptions so an agent can choose between them without trying one. Each now says what authenticates a call, what a refusal by your own plan looks like (`plan_limit_*` with `retryAfter`, not a block by the target), that the result reports the credits it spent, and how the parameters interact rather than restating the schema: how the timeouts nest, that `validate` decides what counts as success, that `maxTries` and `timeout_ms` bound each other.
