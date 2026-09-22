@@ -131,7 +131,7 @@ const ProxyInnerRequestSchema = z
       .url()
       .describe("Public target URL. Private or reserved targets return `ssrf_blocked`. Use {ts} in the URL to insert the current Unix timestamp. Example: https://shop.example.com/pricing."),
     headers: z
-      .array(z.tuple([z.string(), z.string()]))
+      .array(z.array(z.string()).length(2))
       .optional()
       .describe("Custom HTTP headers as [name, value] tuples. Example: [[\"Accept\", \"application/json\"]]"),
     unblocker: z
@@ -373,7 +373,7 @@ export function registerProxyTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.7.2 (proxy)",
+          "User-Agent": "foura-mcp/0.7.3 (proxy)",
         },
         body: JSON.stringify(upstreamBody),
       });

@@ -168,7 +168,7 @@ const autoInputShape = {
     .optional()
     .describe("HTTP method for the target request (default GET)."),
   headers: z
-    .array(z.tuple([z.string(), z.string()]))
+    .array(z.array(z.string()).length(2))
     .optional()
     .describe("Custom HTTP headers as [name, value] tuples. Example: [[\"Accept\", \"application/json\"], [\"Authorization\", \"Bearer ...\"]]"),
   data: z
@@ -303,7 +303,7 @@ export function registerAutoTool(server: McpServer): void {
         headers: {
           "X-API-Key": getApiKey(),
           "Content-Type": "application/json",
-          "User-Agent": "foura-mcp/0.7.2 (auto)",
+          "User-Agent": "foura-mcp/0.7.3 (auto)",
         },
         body: JSON.stringify(upstreamBody),
         headersTimeout: 200_000,
