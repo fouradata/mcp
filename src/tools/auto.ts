@@ -168,7 +168,7 @@ const autoInputShape = {
     .optional()
     .describe("HTTP method for the target request (default GET)."),
   headers: z
-    .array(z.tuple([z.string(), z.string()]))
+    .array(z.array(z.string()).length(2))
     .optional()
     .describe("Custom HTTP headers as [name, value] tuples. Example: [[\"Accept\", \"application/json\"], [\"Authorization\", \"Bearer ...\"]]"),
   data: z
