@@ -246,7 +246,7 @@ const proxyOutputShape = {
   profile: z
     .string()
     .optional()
-    .describe("The browser family rotation moved to after the target refused the one this request sent. Absent means it went out as written; when present, replay with it or repeat the version that failed."),
+    .describe("The catalogue profile id rotation moved to after the target refused the browser this request sent. Absent means it went out as written; when present, pass it as `profile` to present the same browser on the next call."),
   exitClass: z
     .enum(["standard", "premium"])
     .optional()

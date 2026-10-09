@@ -109,7 +109,7 @@ const AutoMetaSchema = z
 // Reusable session values for clients that need a follow-up request.
 const AutoSessionSchema = z
   .object({
-    proxy: z.string().optional().describe("Opaque base36 exit id of the session (e.g. `4DZ3VE`) - pass to foura_single.proxy / foura_proxy.proxy to replay through the same exit. Never a raw IP."),
+    proxy: z.string().optional().describe("Opaque base36 exit id of the session (e.g. `4DZ3VE`) - pass it to foura_single.proxy or foura_browser.proxy to replay through the same exit. Never a raw IP."),
     cookies: z.unknown().optional().describe("Cookie objects accumulated by the winning session. For foura_single, serialize their name/value pairs into a Cookie header; pass the array directly to foura_browser.cookies."),
     userAgent: z.string().optional().describe("User-Agent used by the winning session. Send it as a User-Agent header to foura_single or as foura_browser.userAgent."),
   })
@@ -132,7 +132,7 @@ const autoOutputShape = {
     .optional()
     .describe("Decoded response body of the delivered page. String by default; object when the body parsed as JSON. Omitted when offloaded."),
   meta: AutoMetaSchema.optional().describe("Completion details: rung, solved, attempts, and credits. Always present."),
-  exitClass: z.enum(["standard", "premium"]).optional().describe("Which class of exit delivered, when the request named exitClass: premium or standard."),
+  exitClass: z.enum(["standard", "premium"]).optional().describe("Which class of exit delivered, when the request named exitClass: premium or standard. `standard` means the standard pool delivered, which is also the answer once the premium allowance is spent. Neither is an error."),
   session: AutoSessionSchema.optional().describe("Reusable {proxy, cookies, userAgent} values for follow-up calls. For plain HTTP, call foura_single with session.proxy as proxy, session.userAgent as a User-Agent header, and session.cookies serialized as a Cookie header. For JavaScript, pass the three values to foura_browser fields. Present by default; send returnSession:false to omit."),
   // Resource-link fields used when the response body is offloaded.
   offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),

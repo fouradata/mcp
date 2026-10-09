@@ -304,3 +304,65 @@ describe("foura_auto takes exitClass, as foura_proxy does", () => {
     assert.equal(requests.length, before);
   });
 });
+
+describe("descriptions point only at fields that exist", () => {
+  // foura_auto's session.proxy told agents to pass the id to foura_proxy.proxy, a field foura_proxy
+  // has never had (0.8.0 and before). A description is read by a model that will send what it says.
+  const descriptionsOf = (node, out = []) => {
+    if (!node || typeof node !== "object") return out;
+    if (typeof node.description === "string") out.push(node.description);
+    for (const value of Object.values(node)) if (value && typeof value === "object") descriptionsOf(value, out);
+    return out;
+  };
+  const hasInput = (schema, dotted) => {
+    let node = schema;
+    for (const part of dotted.split(".")) {
+      node = node?.properties?.[part];
+      if (!node) return false;
+    }
+    return true;
+  };
+
+  test("every foura_<tool>.<field> named in tools/list is an input of that tool", async () => {
+    const tools = await client.listTools();
+    const inputs = new Map(tools.map((t) => [t.name, t.inputSchema]));
+    const missing = [];
+    let seen = 0;
+    for (const tool of tools) {
+      for (const text of [tool.description, ...descriptionsOf(tool.inputSchema), ...descriptionsOf(tool.outputSchema)]) {
+        for (const [, name, field] of text.matchAll(/\b(foura_(?:single|proxy|browser|auto))\.(\w+(?:\.\w+)*)/g)) {
+          seen++;
+          if (!hasInput(inputs.get(name), field)) missing.push(`${tool.name}: ${name}.${field}`);
+        }
+      }
+    }
+    assert.ok(seen > 5, `only ${seen} field references found; the scan is not reading the descriptions`);
+    assert.deepEqual(missing, []);
+  });
+
+  test("standard under a premium allowance is not an error, on auto as on proxy", async () => {
+    const tools = await client.listTools();
+    for (const name of ["foura_proxy", "foura_auto"]) {
+      const tool = tools.find((t) => t.name === name);
+      assert.match(tool.outputSchema?.properties?.exitClass?.description ?? "", /Neither is an error/, name);
+    }
+  });
+
+  test("the rotation's profile is an id the caller can send back as profile", async () => {
+    const tools = await client.listTools();
+    const proxy = tools.find((t) => t.name === "foura_proxy");
+    const single = tools.find((t) => t.name === "foura_single");
+    assert.match(proxy.outputSchema?.properties?.profile?.description ?? "", /profile id/);
+    assert.match(proxy.outputSchema?.properties?.profile?.description ?? "", /pass it as `profile`/);
+    assert.ok(proxy.inputSchema?.properties?.request?.properties?.profile, "foura_proxy request.profile");
+    assert.ok(single.inputSchema?.properties?.profile, "foura_single.profile");
+  });
+
+  test("a premium exit replayed by single or browser may come from auto too", async () => {
+    const tools = await client.listTools();
+    for (const name of ["foura_single", "foura_browser"]) {
+      const tool = tools.find((t) => t.name === name);
+      assert.match(tool.outputSchema?.properties?.exitClass?.description ?? "", /foura_proxy or foura_auto/, name);
+    }
+  });
+});

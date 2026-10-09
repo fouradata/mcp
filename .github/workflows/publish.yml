@@ -4,7 +4,7 @@ on:
     tags: ['v*']
 permissions:
   contents: read
-  id-token: write   # npm provenance
+  id-token: write   # npm trusted publishing (OIDC) and provenance; no npm token is stored
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -20,8 +20,6 @@ jobs:
           git fetch --no-tags origin main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   github-release:
     needs: publish
     runs-on: ubuntu-latest

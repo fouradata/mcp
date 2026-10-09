@@ -140,7 +140,7 @@ const singleOutputShape = {
     .object({ maxConcurrency: z.number().optional(), maxRpm: z.number().optional() })
     .optional()
     .describe("Per-service limits at error time"),
-  exitClass: z.enum(["standard", "premium"]).optional().describe("`premium` when a premium exit served this call, which happens when `proxy` replays one from foura_proxy."),
+  exitClass: z.enum(["standard", "premium"]).optional().describe("`premium` when a premium exit served this call, which happens when `proxy` replays one from foura_proxy or foura_auto."),
   credits: z.number().optional().describe("Credits this call spent. Reported on failures too: the work was done either way."),
   request_id: z.string().optional().describe("FourA's id for this call, for a support request."),
   code: z.string().optional().describe("Stable error code for retry classification. auth_failed means the FourA API key was rejected; verify that key, not target-site credentials. Other codes: ssrf_blocked, upstream_non_json, output_validation_failed, bad_request (400), forbidden (403), not_found (404), rate_limited (429), at_capacity (503), service_disabled (503), service_unavailable (503), upstream_error (>=500), upstream_client_error (other 4xx), upstream_unknown (defensive). A plan_limit_* code is the caller's own FourA plan refusing (credits, bandwidth, rate, concurrency, browser_daily, premium, feature), not the target: wait out retryAfter or change the plan, never retry the same work through another tool."),
