@@ -2,6 +2,12 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.8.0] - 2026-10-09
+### Added
+- `foura_auto` accepts `exitClass`, as `foura_proxy` does. `premium` lets auto escalate to a premium exit once the standard pool cannot reach the page; it needs a plan that includes premium exits. `standard` never escalates; omitting the field leaves the choice to auto. The result reports which class delivered in `exitClass` (and in `meta.exitClass`).
+### Security
+- Refreshed `@modelcontextprotocol/sdk` to 1.32.1 to clear a published advisory in its OAuth client (GHSA-6qxp-vccf-f47h), which this server does not use. `npm audit` reports no known vulnerabilities.
+
 ## [0.7.3] - 2026-09-22
 ### Fixed
 - The published tool schemas declared JSON Schema draft-07 and described `headers` in the draft-07 tuple form. A client whose validator implements only 2020-12 could not read them: it refused `foura_single`, `foura_proxy` and `foura_auto` while listing the tools, and refused `foura_browser` on its first call. The schemas no longer declare a dialect, and `headers` is now an array of two strings. What a call accepts, how it is validated, and the request sent to the API are all unchanged.
