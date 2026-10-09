@@ -2,6 +2,15 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.8.1] - 2026-10-09
+### Fixed
+- `foura_auto`'s `session.proxy` told agents to pass the id to `foura_proxy.proxy`, a field `foura_proxy` does not have. It now names `foura_single.proxy` and `foura_browser.proxy`.
+- `foura_auto`'s result `exitClass` now says what `foura_proxy`'s already did: `standard` means the standard pool delivered, which is also the answer once the premium allowance is spent, and neither class is an error.
+- `foura_proxy`'s result `profile` was described as a browser family. It is the catalogue profile id the rotation moved to, and the description now says to pass it back as `profile`.
+- `foura_single` and `foura_browser` now say that a premium exit they replay may come from `foura_auto` as well as from `foura_proxy`.
+
+Only descriptions changed: what each tool accepts, the request it sends and the result it returns are the same as in 0.8.0.
+
 ## [0.8.0] - 2026-10-09
 ### Added
 - `foura_auto` accepts `exitClass`, as `foura_proxy` does. `premium` lets auto escalate to a premium exit once the standard pool cannot reach the page; it needs a plan that includes premium exits. `standard` never escalates; omitting the field leaves the choice to auto. The result reports which class delivered in `exitClass` (and in `meta.exitClass`).
