@@ -132,6 +132,7 @@ const autoOutputShape = {
     .optional()
     .describe("Decoded response body of the delivered page. String by default; object when the body parsed as JSON. Omitted when offloaded."),
   meta: AutoMetaSchema.optional().describe("Completion details: rung, solved, attempts, and credits. Always present."),
+  exitClass: z.enum(["standard", "premium"]).optional().describe("Which class of exit delivered, when the request named exitClass: premium or standard."),
   session: AutoSessionSchema.optional().describe("Reusable {proxy, cookies, userAgent} values for follow-up calls. For plain HTTP, call foura_single with session.proxy as proxy, session.userAgent as a User-Agent header, and session.cookies serialized as a Cookie header. For JavaScript, pass the three values to foura_browser fields. Present by default; send returnSession:false to omit."),
   // Resource-link fields used when the response body is offloaded.
   offloaded_resource_uri: z.string().optional().describe("foura-mcp://payload/<uuid>. Pass this URI to resources/read to retrieve the offloaded body."),
@@ -202,6 +203,10 @@ const autoInputShape = {
     .max(20)
     .optional()
     .describe("Follow up to N redirects for HTTP and proxy requests. Default 5; 0 means don't follow. Browser navigation handles redirects itself."),
+  exitClass: z
+    .enum(["standard", "premium"])
+    .optional()
+    .describe("Exit class the call may use, as on foura_proxy. premium lets auto escalate to a premium exit once the standard pool cannot reach the page; it needs a plan with premium exits, and the result's exitClass says which class delivered. standard never escalates; omit for no preference."),
   offload_large: z
     .boolean()
     .optional()
@@ -265,8 +270,8 @@ export function registerAutoTool(server: McpServer): void {
         "returns either validated content or a failure, and cannot guarantee a match. It owns its own " +
         "retry settings, so there is no maxTries here, and timeout_ms is the budget for every attempt " +
         "together rather than for one. What it cannot do is the reason to reach for another tool: a strict " +
-        "exit country, a pinned exit and a premium exit live on foura_proxy (auto can only avoid exits, " +
-        "through ignoreProxies); choosing which browser is presented to the target lives on foura_single " +
+        "exit country and a pinned exit live on foura_proxy (auto can only avoid exits, through " +
+        "ignoreProxies, or escalate to a premium exit with exitClass); choosing which browser is presented to the target lives on foura_single " +
         "and foura_proxy; a scripted browser session lives on foura_browser. A request that names any of " +
         "those belongs there rather than here. One FourA API key authenticates every call, the result " +
         "reports the credits it spent, which is the sum of the attempts it made, and a refusal by your own " +
