@@ -271,3 +271,36 @@ describe("a refusal by the caller's own plan is not a refusal by the target", ()
     assert.equal(result.structuredContent.code, "auth_failed");
   });
 });
+
+describe("foura_auto takes exitClass, as foura_proxy does", () => {
+  test("tools/list declares it in both directions", async () => {
+    const tools = await client.listTools();
+    const auto = tools.find((t) => t.name === "foura_auto");
+    assert.deepEqual(auto.inputSchema?.properties?.exitClass?.enum, ["standard", "premium"]);
+    assert.match(auto.inputSchema?.properties?.exitClass?.description ?? "", /premium/);
+    assert.deepEqual(auto.outputSchema?.properties?.exitClass?.enum, ["standard", "premium"]);
+    assert.match(auto.description ?? "", /exitClass/);
+  });
+
+  test("the field rides the request, and the class that delivered comes back", async () => {
+    enqueue(
+      { status: 200, data: "ok", meta: { rung: "browser", solved: false, attempts: 3, credits: 17, exitClass: "premium" } },
+      { headers: { "x-foura-credits": "17", "x-foura-exit-class": "premium" } },
+    );
+    const before = requests.length;
+    const result = await client.callTool("foura_auto", { url: "https://1.1.1.1/", exitClass: "premium" });
+
+    assert.notEqual(result.isError, true);
+    assert.equal(requests.length, before + 1);
+    assert.equal(requests.at(-1).body.exitClass, "premium");
+    assert.equal(result.structuredContent.exitClass, "premium");
+    assert.equal(result.structuredContent.meta.exitClass, "premium");
+  });
+
+  test("an unknown class is refused before any upstream call", async () => {
+    const before = requests.length;
+    const result = await client.callTool("foura_auto", { url: "https://1.1.1.1/", exitClass: "residential" });
+    assert.equal(result.isError, true);
+    assert.equal(requests.length, before);
+  });
+});

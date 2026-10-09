@@ -62,7 +62,7 @@ export function createServer(): McpServer {
   const server = new McpServer({
     name: "foura-mcp",
     title: "FourA",
-    version: "0.7.3",
+    version: "0.8.0",
     description:
       "Reliable web access for AI agents: smart HTTP, rotating proxies, and full-browser rendering.",
     websiteUrl: "https://foura.ai/mcp",

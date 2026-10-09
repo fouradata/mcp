@@ -124,9 +124,11 @@ Give it a URL and get the content back. Use this first when you don't want to ch
 }
 ```
 
-The client surface is intentionally minimal: `url` (required), plus optional `method`, `headers`, `data`, `validate`, `returnSession` (default `true`), `forceProxy` (default `true`), `timeout_ms` (5000-180000, default 120000), `ignoreProxies`.
+The client surface is intentionally minimal: `url` (required), plus optional `method`, `headers`, `data`, `validate`, `returnSession` (default `true`), `forceProxy` (default `true`), `timeout_ms` (5000-180000, default 120000), `ignoreProxies`, `exitClass` (`standard` or `premium`, as on `foura_proxy`).
 
 `structuredContent` shape: `{status, headers, data, meta, session}`. `meta` is always present - `{rung, solved, attempts, credits}` - so your agent can see how the request completed and how many credits it used. `session` (`{proxy, cookies, userAgent}`) is returned by default for follow-up requests (pass `session.proxy` into the `proxy` field). Send `returnSession: false` to omit it. There is no `total_time` field on auto.
+
+`exitClass: "premium"` lets auto escalate to a premium exit once the standard pool cannot reach the page, and the result's `exitClass` says which class delivered. The standard pool goes first; once the premium traffic in your plan is spent the call goes on in the standard pool and reports `standard`. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`. `exitClass: "standard"` keeps auto off premium exits.
 
 ### `foura_single` - fast HTTP
 
@@ -270,7 +272,7 @@ Beside the tool's own fields, each result reports what the call cost and how to 
 
 - `credits` - credits this call spent, on failures as well, because the work was done either way;
 - `request_id` - FourA's id for the call. Quote it in a support request;
-- `exitClass` - `premium` when a premium exit served the call. On `foura_single` and `foura_browser` that happens when `proxy` replays an exit `foura_proxy` found.
+- `exitClass` - `premium` when a premium exit served the call. On `foura_single` and `foura_browser` that happens when `proxy` replays an exit `foura_proxy` found; on `foura_proxy` and `foura_auto` it is reported whenever the request named an `exitClass`.
 
 ## Combining the tools - reuse the same exit
 
