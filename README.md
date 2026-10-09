@@ -17,7 +17,7 @@
   <a href="https://www.npmjs.com/package/@fouradata/mcp"><img src="https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm" alt="npm provenance"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f" alt="MIT license"></a>
   <a href="https://glama.ai/mcp/servers/fouradata/mcp"><img src="https://glama.ai/mcp/servers/fouradata/mcp/badges/score.svg" alt="FourA MCP score on Glama"></a>
-  <a href="https://tdqs.dev/reports/ivgtefqu60"><img src="https://tdqs.dev/reports/ivgtefqu60/badge.svg" alt="Tool Definition Quality Score for FourA MCP"></a>
+  <a href="https://tdqs.dev/reports/ogacknph95"><img src="https://tdqs.dev/reports/ogacknph95/badge.svg" alt="Tool Definition Quality Score for FourA MCP"></a>
   <a href="https://smithery.ai/servers/foura/mcp"><img src="https://img.shields.io/badge/Smithery-listed-6e56cf" alt="FourA on Smithery"></a>
 </p>
 
