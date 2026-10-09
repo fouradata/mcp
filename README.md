@@ -17,7 +17,7 @@
   <a href="https://www.npmjs.com/package/@fouradata/mcp"><img src="https://img.shields.io/badge/supply_chain-provenance_signed-2ea44f?logo=npm" alt="npm provenance"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@fouradata/mcp?color=2ea44f" alt="MIT license"></a>
   <a href="https://glama.ai/mcp/servers/fouradata/mcp"><img src="https://glama.ai/mcp/servers/fouradata/mcp/badges/score.svg" alt="FourA MCP score on Glama"></a>
-  <a href="https://tdqs.dev/reports/ivgtefqu60"><img src="https://tdqs.dev/reports/ivgtefqu60/badge.svg" alt="Tool Definition Quality Score for FourA MCP"></a>
+  <a href="https://tdqs.dev/reports/ogacknph95"><img src="https://tdqs.dev/reports/ogacknph95/badge.svg" alt="Tool Definition Quality Score for FourA MCP"></a>
   <a href="https://smithery.ai/servers/foura/mcp"><img src="https://img.shields.io/badge/Smithery-listed-6e56cf" alt="FourA on Smithery"></a>
 </p>
 
@@ -128,7 +128,7 @@ The client surface is intentionally minimal: `url` (required), plus optional `me
 
 `structuredContent` shape: `{status, headers, data, meta, session}`. `meta` is always present - `{rung, solved, attempts, credits}` - so your agent can see how the request completed and how many credits it used. `session` (`{proxy, cookies, userAgent}`) is returned by default for follow-up requests (pass `session.proxy` into the `proxy` field). Send `returnSession: false` to omit it. There is no `total_time` field on auto.
 
-`exitClass: "premium"` lets auto escalate to a premium exit once the standard pool cannot reach the page, and the result's `exitClass` says which class delivered. The standard pool goes first; once the premium traffic in your plan is spent the call goes on in the standard pool and reports `standard`. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`. `exitClass: "standard"` keeps auto off premium exits.
+`exitClass: "premium"` lets auto escalate to a premium exit once the standard pool cannot reach the page, and the result's `exitClass` says which class delivered. The standard pool goes first; once the premium traffic in your plan is spent the call goes on in the standard pool and reports `standard`. Neither class is an error. On a plan without premium exits the call is refused with `code: "plan_limit_premium"`. `exitClass: "standard"` keeps auto off premium exits.
 
 ### `foura_single` - fast HTTP
 
@@ -182,7 +182,7 @@ Same target shape as `foura_single`, but routed through rotating proxies with au
 }
 ```
 
-`structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). When the rotation had to move to another browser family to get an answer, `profile` names the family it settled on; replay with it or the next call repeats the version that failed. `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
+`structuredContent` adds `proxy` (the encoded ID of the proxy that succeeded) and `total` (outer timing including selection and retries). When the rotation had to move to another browser to get an answer, `profile` names the catalogue profile it settled on; pass it as `profile` to present the same browser on the next call. `exitCountries` is optional: values are trimmed, uppercased, and deduplicated; proxies with unknown exits are excluded; the request never falls back to an unrequested country. Selection uses the latest available country metadata, normally updated within ten minutes, and a scoped success returns that value as `exitCountry`. If no eligible proxy matches, the result uses `code: "no_eligible_proxy"`.
 
 The inner `request` takes the same browser-profile fields as `foura_single`: `browser`, `os`, `version`, or an exact `profile`.
 
@@ -272,7 +272,7 @@ Beside the tool's own fields, each result reports what the call cost and how to 
 
 - `credits` - credits this call spent, on failures as well, because the work was done either way;
 - `request_id` - FourA's id for the call. Quote it in a support request;
-- `exitClass` - `premium` when a premium exit served the call. On `foura_single` and `foura_browser` that happens when `proxy` replays an exit `foura_proxy` found; on `foura_proxy` and `foura_auto` it is reported whenever the request named an `exitClass`.
+- `exitClass` - `premium` when a premium exit served the call. On `foura_single` and `foura_browser` that happens when `proxy` replays a premium exit that `foura_proxy` or `foura_auto` found; on `foura_proxy` and `foura_auto` it is reported whenever the request named an `exitClass`.
 
 ## Combining the tools - reuse the same exit
 
