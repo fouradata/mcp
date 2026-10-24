@@ -2,6 +2,12 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.8.2] - 2026-10-24
+### Security
+- Refreshed the locked runtime dependencies to clear published advisories: express 5.3.0 with body-parser 2.4.0, undici 8.12.3, zod 4.6.7, hono 4.13.13, fast-uri 3.1.9 and ip-address 10.7.4. `npm audit` reports no known vulnerabilities.
+
+No change to the tools, their schemas or the requests they send.
+
 ## [0.8.1] - 2026-10-09
 ### Fixed
 - `foura_auto`'s `session.proxy` told agents to pass the id to `foura_proxy.proxy`, a field `foura_proxy` does not have. It now names `foura_single.proxy` and `foura_browser.proxy`.
