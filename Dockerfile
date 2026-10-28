@@ -1,4 +1,4 @@
-FROM node:24-slim AS builder
+FROM node:26-slim AS builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -7,7 +7,7 @@ COPY tsconfig.json ./
 COPY src/ ./src/
 RUN npm run build
 
-FROM node:24-slim
+FROM node:26-slim
 
 # Install curl for the health check, then drop to a dedicated non-root user.
 # Run the final image as an unprivileged user.

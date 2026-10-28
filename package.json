@@ -1,7 +1,7 @@
 {
   "name": "@fouradata/mcp",
   "mcpName": "ai.foura/mcp",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Web access for AI agents - smart HTTP, rotating proxy, and full-browser tools plus six ready-made workflows.",
   "type": "module",
   "main": "dist/server.js",
@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^24.13.2",
+    "@types/node": "^26.6.5",
     "ajv": "^8.20.0",
     "tsx": "^4.23.5",
     "typescript": "^7.0.2"
