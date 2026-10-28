@@ -6,7 +6,7 @@ import { withApiKey } from "./auth.js";
 import { LANDING_REDIRECT, LLMS_TXT } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3076);
-const SERVER_VERSION = "0.8.2";
+const SERVER_VERSION = "0.8.3";
 
 // Read protocol versions from the SDK so client compatibility tracks dependency updates.
 
