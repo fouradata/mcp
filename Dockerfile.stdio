@@ -3,14 +3,14 @@
 # the Streamable HTTP variant; this one runs the canonical stdio transport that
 # Docker Desktop's MCP Toolkit spawns as a subprocess.
 
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci
 COPY src ./src
 RUN npm run build
 
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 LABEL org.opencontainers.image.source="https://github.com/fouradata/mcp" \
