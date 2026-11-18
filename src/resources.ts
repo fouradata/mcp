@@ -44,13 +44,10 @@ export function hashApiKey(apiKey: string): string {
 const SAFE_UUID = /^[0-9a-f-]{36}$/i;
 const SAFE_KEYHASH = /^[0-9a-f]{16}$/;
 
-const tenantDirReady = new Set<string>();
+// Create the directory on every write: a cleanup outside this process may have removed it.
 async function ensureTenantDir(keyhash: string): Promise<string> {
   const dir = path.join(PAYLOADS_DIR, keyhash);
-  if (!tenantDirReady.has(keyhash)) {
-    await mkdir(dir, { recursive: true });
-    tenantDirReady.add(keyhash);
-  }
+  await mkdir(dir, { recursive: true });
   return dir;
 }
 
@@ -132,7 +129,12 @@ export function registerResourceHandler(server: McpServer): void {
       if (meta.keyhash !== keyhash) {
         throw new Error(`Payload not found: ${uuidStr}`);
       }
-      const buf = await readFile(dataPath);
+      let buf: Buffer;
+      try {
+        buf = await readFile(dataPath);
+      } catch {
+        throw new Error(`Payload not found: ${uuidStr}`);
+      }
 
       return {
         contents: [
