@@ -2,6 +2,15 @@
 
 All notable changes to `@fouradata/mcp`. Format: [Keep a Changelog](https://keepachangelog.com); [SemVer](https://semver.org).
 
+## [0.8.4] - 2026-11-18
+### Fixed
+- `offload_large` stopped working for an API key once the folder holding its payloads was removed while the server kept running (for example by a cleanup of the system temp folder); the call answered with an internal error instead of a `resource_link`. The folder is now created again before every write.
+- Reading a payload whose files are gone answers "Payload not found" instead of a file-system error.
+### Security
+- Refreshed the locked runtime dependencies to clear published advisories: hono 4.13.19 and @hono/node-server 2.1.9. `npm audit` reports no known vulnerabilities.
+
+No change to the tools, their schemas or the requests they send.
+
 ## [0.8.3] - 2026-10-28
 ### Changed
 - The Docker images built from `Dockerfile` (Streamable HTTP) and `Dockerfile.stdio` now run on Node 26, the new long-term support line. The npm package still runs on Node 22.19 and later.
